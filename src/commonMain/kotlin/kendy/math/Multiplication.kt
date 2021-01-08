@@ -139,8 +139,8 @@ internal object Multiplication {
                 }
                 res = res!!.shiftLeft(intExp)
             }
-        } catch (error: java.lang.OutOfMemoryError) {
-            throw java.lang.ArithmeticException(error.message)
+        } catch (error: Throwable) {
+            throw ArithmeticException(error.message)
         }
         return res
     }
@@ -167,21 +167,21 @@ internal object Multiplication {
     }
 
     init {
-        var i: Int
-        val fivePow = 1L
-        kendy.math.i = 0
-        while (kendy.math.i <= 18) {
-            bigFivePows[kendy.math.i] = valueOf(kendy.math.fivePow)
-            bigTenPows[kendy.math.i] = valueOf(kendy.math.fivePow shl kendy.math.i)
-            kendy.math.fivePow *= 5
-            kendy.math.i++
+        var i: Int = 0
+        var fivePow = 1L
+
+        while (i <= 18) {
+            bigFivePows[i] = valueOf(fivePow)
+            bigTenPows[i] = valueOf(fivePow shl i)
+            fivePow *= 5
+            i++
         }
-        while (kendy.math.i < bigTenPows.size) {
-            bigFivePows[kendy.math.i] = bigFivePows[kendy.math.i - 1]!!
+        while (i < bigTenPows.size) {
+            bigFivePows[i] = bigFivePows[i - 1]!!
                 .multiply(bigFivePows[1]!!)
-            bigTenPows[kendy.math.i] = bigTenPows[kendy.math.i - 1]!!
+            bigTenPows[i] = bigTenPows[i - 1]!!
                 .multiply(BigInteger.TEN)
-            kendy.math.i++
+            i++
         }
     }
 }
