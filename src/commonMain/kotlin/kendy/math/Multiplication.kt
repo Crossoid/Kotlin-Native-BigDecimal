@@ -16,8 +16,6 @@
  */
 package kendy.math
 
-import kendy.math.BigInteger.Companion.valueOf
-
 /**
  * Static library that provides all multiplication of [BigInteger] methods.
  */
@@ -50,13 +48,13 @@ internal object Multiplication {
      * An array with the first powers of ten in `BigInteger` version.
      * (`10^0,10^1,...,10^31`)
      */
-    val bigTenPows = arrayOfNulls<BigInteger>(32)
+    var bigTenPows = Array(32) { BigInteger.valueOf(0) }
 
     /**
      * An array with the first powers of five in `BigInteger` version.
      * (`5^0,5^1,...,5^31`)
      */
-    val bigFivePows = arrayOfNulls<BigInteger>(32)
+    val bigFivePows = Array(32) { BigInteger.valueOf(0) }
     // BEGIN android-note: multiply has been removed in favor of using OpenSSL BIGNUM
     // END android-note
     /**
@@ -95,18 +93,18 @@ internal object Multiplication {
      * @param exp the exponent of power of ten, it must be positive.
      * @return a `BigInteger` with value `10<sup>exp</sup>`.
      */
-    fun powerOf10(exp: Long): BigInteger? {
+    fun powerOf10(exp: Long): BigInteger {
         // PRE: exp >= 0
         var intExp = exp.toInt()
         // "SMALL POWERS"
         if (exp < bigTenPows.size) {
             // The largest power that fit in 'long' type
-            return bigTenPows[intExp]
+            return bigTenPows[intExp]!!
         } else if (exp <= 50) {
             // To calculate:    10^exp
             return BigInteger.TEN.pow(intExp)
         }
-        var res: BigInteger? = null
+        var res: BigInteger
         try {
             // "LARGE POWERS"
             if (exp <= Int.MAX_VALUE) {
@@ -126,18 +124,18 @@ internal object Multiplication {
                 var longExp = exp - Int.MAX_VALUE
                 intExp = (exp % Int.MAX_VALUE) as Int
                 while (longExp > Int.MAX_VALUE) {
-                    res = res!!.multiply(powerOfFive)
+                    res = res.multiply(powerOfFive)
                     longExp -= Int.MAX_VALUE.toLong()
                 }
-                res = res!!.multiply(bigFivePows[1]!!.pow(intExp))
+                res = res.multiply(bigFivePows[1]!!.pow(intExp))
                 // To calculate:    5^exp << exp
                 res = res.shiftLeft(Int.MAX_VALUE)
                 longExp = exp - Int.MAX_VALUE
                 while (longExp > Int.MAX_VALUE) {
-                    res = res!!.shiftLeft(Int.MAX_VALUE)
+                    res = res.shiftLeft(Int.MAX_VALUE)
                     longExp -= Int.MAX_VALUE.toLong()
                 }
-                res = res!!.shiftLeft(intExp)
+                res = res.shiftLeft(intExp)
             }
         } catch (error: Throwable) {
             throw ArithmeticException(error.message)
@@ -171,8 +169,8 @@ internal object Multiplication {
         var fivePow = 1L
 
         while (i <= 18) {
-            bigFivePows[i] = valueOf(fivePow)
-            bigTenPows[i] = valueOf(fivePow shl i)
+            bigFivePows[i] = BigInteger.valueOf(fivePow)
+            bigTenPows[i] = BigInteger.valueOf(fivePow shl i)
             fivePow *= 5
             i++
         }
