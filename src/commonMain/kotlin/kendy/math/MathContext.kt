@@ -16,11 +16,13 @@
  */
 package kendy.math
 
+import kotlin.jvm.JvmOverloads
+
 /**
  * Immutable objects describing settings such as rounding mode and digit
  * precision for the numerical operations provided by class [BigDecimal].
  */
-class MathContext : java.io.Serializable {
+class MathContext /*: java.io.Serializable*/ {
     /**
      * Returns the precision. The precision is the number of digits used for an
      * operation. Results are rounded to this precision. The precision is
@@ -104,7 +106,7 @@ class MathContext : java.io.Serializable {
     constructor(s: String) {
         val precisionLength = "precision=".length
         val roundingModeLength = "roundingMode=".length
-        var spaceIndex: Int
+        var spaceIndex: Int = -1
         if (!s.startsWith("precision=") || s.indexOf(' ', precisionLength)
                 .also { spaceIndex = it } == -1
         ) {
@@ -113,7 +115,7 @@ class MathContext : java.io.Serializable {
         val precisionString = s.substring(precisionLength, spaceIndex)
         try {
             precision = precisionString.toInt()
-        } catch (nfe: java.lang.NumberFormatException) {
+        } catch (nfe: NumberFormatException) {
             throw invalidMathContext("Bad precision", s)
         }
         var roundingModeStart = spaceIndex + 1
@@ -125,16 +127,16 @@ class MathContext : java.io.Serializable {
         checkValid()
     }
 
-    private fun invalidMathContext(reason: String, s: String): java.lang.IllegalArgumentException {
-        throw java.lang.IllegalArgumentException("$reason: $s")
+    private fun invalidMathContext(reason: String, s: String): IllegalArgumentException {
+        throw IllegalArgumentException("$reason: $s")
     }
 
     private fun checkValid() {
         if (precision < 0) {
-            throw java.lang.IllegalArgumentException("Negative precision: $precision")
+            throw IllegalArgumentException("Negative precision: $precision")
         }
         if (roundingMode == null) {
-            throw java.lang.NullPointerException("roundingMode == null")
+            throw NullPointerException("roundingMode == null")
         }
     }
 
@@ -186,7 +188,7 @@ class MathContext : java.io.Serializable {
      * @throws StreamCorruptedException
      * if `roundingMode == null`
      */
-    @Throws(java.io.IOException::class, java.lang.ClassNotFoundException::class)
+    /*@Throws(java.io.IOException::class, java.lang.ClassNotFoundException::class)
     private fun readObject(s: java.io.ObjectInputStream) {
         s.defaultReadObject()
         try {
@@ -194,7 +196,7 @@ class MathContext : java.io.Serializable {
         } catch (ex: java.lang.Exception) {
             throw java.io.StreamCorruptedException(ex.message)
         }
-    }
+    }*/
 
     companion object {
         private const val serialVersionUID = 5579720004786848255L
