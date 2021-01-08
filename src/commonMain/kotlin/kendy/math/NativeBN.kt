@@ -13,124 +13,119 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package kendy.math
 
-package java.math;
+internal object NativeBN {
+    external fun BN_new(): Long
 
-final class NativeBN {
-
-    public static native long BN_new();
     // BIGNUM *BN_new(void);
+    external fun BN_free(a: Long)
 
-    public static native void BN_free(long a);
     // void BN_free(BIGNUM *a);
+    external fun BN_cmp(a: Long, b: Long): Int
 
-    public static native int BN_cmp(long a, long b);
     // int BN_cmp(const BIGNUM *a, const BIGNUM *b);
+    external fun BN_copy(to: Long, from: Long)
 
-    public static native void BN_copy(long to, long from);
     // BIGNUM *BN_copy(BIGNUM *to, const BIGNUM *from);
+    external fun putLongInt(a: Long, dw: Long)
+    external fun putULongInt(a: Long, dw: Long, neg: Boolean)
+    external fun BN_dec2bn(a: Long, str: String?): Int
 
-    public static native void putLongInt(long a, long dw);
-    public static native void putULongInt(long a, long dw, boolean neg);
-
-    public static native int BN_dec2bn(long a, String str);
     // int BN_dec2bn(BIGNUM **a, const char *str);
+    external fun BN_hex2bn(a: Long, str: String?): Int
 
-    public static native int BN_hex2bn(long a, String str);
     // int BN_hex2bn(BIGNUM **a, const char *str);
+    external fun BN_bin2bn(s: ByteArray?, len: Int, neg: Boolean, ret: Long)
 
-    public static native void BN_bin2bn(byte[] s, int len, boolean neg, long ret);
     // BIGNUM * BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
     // BN-Docu: s is taken as unsigned big endian;
     // Additional parameter: neg.
+    external fun litEndInts2bn(ints: IntArray?, len: Int, neg: Boolean, ret: Long)
+    external fun twosComp2bn(s: ByteArray?, len: Int, ret: Long)
+    external fun longInt(a: Long): Long
 
-    public static native void litEndInts2bn(int[] ints, int len, boolean neg, long ret);
-
-    public static native void twosComp2bn(byte[] s, int len, long ret);
-
-
-    public static native long longInt(long a);
     // unsigned long BN_get_word(BIGNUM *a);
+    external fun BN_bn2dec(a: Long): String?
 
-    public static native String BN_bn2dec(long a);
     // char * BN_bn2dec(const BIGNUM *a);
+    external fun BN_bn2hex(a: Long): String?
 
-    public static native String BN_bn2hex(long a);
     // char * BN_bn2hex(const BIGNUM *a);
+    external fun BN_bn2bin(a: Long): ByteArray?
 
-    public static native byte[] BN_bn2bin(long a);
     // Returns result byte[] AND NOT length.
     // int BN_bn2bin(const BIGNUM *a, unsigned char *to);
+    external fun bn2litEndInts(a: Long): IntArray?
+    external fun sign(a: Long): Int
 
-    public static native int[] bn2litEndInts(long a);
-
-    public static native int sign(long a);
     // Returns -1, 0, 1 AND NOT boolean.
     // #define BN_is_negative(a) ((a)->neg != 0)
+    external fun BN_set_negative(b: Long, n: Int)
 
-    public static native void BN_set_negative(long b, int n);
     // void BN_set_negative(BIGNUM *b, int n);
+    external fun bitLength(a: Long): Int
+    external fun BN_is_bit_set(a: Long, n: Int): Boolean
 
-    public static native int bitLength(long a);
-
-    public static native boolean BN_is_bit_set(long a, int n);
     // int BN_is_bit_set(const BIGNUM *a, int n);
+    external fun BN_shift(r: Long, a: Long, n: Int)
 
-    public static native void BN_shift(long r, long a, int n);
     // int BN_shift(BIGNUM *r, const BIGNUM *a, int n);
+    external fun BN_add_word(a: Long, w: Int)
 
-    public static native void BN_add_word(long a, int w);
     // ATTENTION: w is treated as unsigned.
     // int BN_add_word(BIGNUM *a, BN_ULONG w);
+    external fun BN_mul_word(a: Long, w: Int)
 
-    public static native void BN_mul_word(long a, int w);
     // ATTENTION: w is treated as unsigned.
     // int BN_mul_word(BIGNUM *a, BN_ULONG w);
+    external fun BN_mod_word(a: Long, w: Int): Int
 
-    public static native int BN_mod_word(long a, int w);
     // ATTENTION: w is treated as unsigned.
     // BN_ULONG BN_mod_word(BIGNUM *a, BN_ULONG w);
+    external fun BN_add(r: Long, a: Long, b: Long)
 
-    public static native void BN_add(long r, long a, long b);
     // int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
+    external fun BN_sub(r: Long, a: Long, b: Long)
 
-    public static native void BN_sub(long r, long a, long b);
     // int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
+    external fun BN_gcd(r: Long, a: Long, b: Long)
 
-    public static native void BN_gcd(long r, long a, long b);
     // int BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+    external fun BN_mul(r: Long, a: Long, b: Long)
 
-    public static native void BN_mul(long r, long a, long b);
     // int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+    external fun BN_exp(r: Long, a: Long, p: Long)
 
-    public static native void BN_exp(long r, long a, long p);
     // int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
+    external fun BN_div(dv: Long, rem: Long, m: Long, d: Long)
 
-    public static native void BN_div(long dv, long rem, long m, long d);
     // int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
+    external fun BN_nnmod(r: Long, a: Long, m: Long)
 
-    public static native void BN_nnmod(long r, long a, long m);
     // int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
+    external fun BN_mod_exp(r: Long, a: Long, p: Long, m: Long)
 
-    public static native void BN_mod_exp(long r, long a, long p, long m);
     // int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx);
+    external fun BN_mod_inverse(ret: Long, a: Long, n: Long)
 
-    public static native void BN_mod_inverse(long ret, long a, long n);
     // BIGNUM * BN_mod_inverse(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
+    external fun BN_generate_prime_ex(
+        ret: Long, bits: Int, safe: Boolean,
+        add: Long, rem: Long
+    )
 
-
-    public static native void BN_generate_prime_ex(long ret, int bits, boolean safe,
-                                                   long add, long rem);
     // int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     //         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb);
+    external fun BN_primality_test(
+        candidate: Long, checks: Int,
+        do_trial_division: Boolean
+    ): Boolean
 
-    public static native boolean BN_primality_test(long candidate, int checks,
-                                                   boolean do_trial_division);
     // int BN_primality_test(int *is_probably_prime, const BIGNUM *candidate, int checks,
     //                       BN_CTX *ctx, int do_trial_division, BN_GENCB *cb);
     // Returns *is_probably_prime on success and throws an exception on error.
-
-    public static native long getNativeFinalizer();
     // &BN_free
-
+    val nativeFinalizer: Long
+        external get
 }
