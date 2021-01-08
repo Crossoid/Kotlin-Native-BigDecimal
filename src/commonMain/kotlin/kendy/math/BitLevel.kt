@@ -16,6 +16,9 @@
  */
 package kendy.math
 
+import kotlin.jvm.JvmStatic
+import kotlin.math.max
+
 /**
  * Static library that provides all the **bit level** operations for
  * [BigInteger]. The operations are:
@@ -49,7 +52,7 @@ internal object BitLevel {
             }
         }
         // Subtracting all sign bits
-        bLength -= java.lang.Integer.numberOfLeadingZeros(highDigit)
+        bLength -= highDigit.countLeadingZeroBits()
         return bLength
     }
 
@@ -64,15 +67,15 @@ internal object BitLevel {
         var i = `val`.firstNonzeroDigit
         if (`val`.sign > 0) {
             while (i < `val`.numberLength) {
-                bCount += java.lang.Integer.bitCount(`val`.digits[i])
+                bCount += `val`.digits[i].countOneBits()
                 i++
             }
         } else { // (sign < 0)
             // this digit absorbs the carry
-            bCount += java.lang.Integer.bitCount(-`val`.digits[i])
+            bCount += (-`val`.digits[i]).countOneBits()
             i++
             while (i < `val`.numberLength) {
-                bCount += java.lang.Integer.bitCount(`val`.digits[i].inv())
+                bCount += `val`.digits[i].inv().countOneBits()
                 i++
             }
             // We take the complement sum:
@@ -97,6 +100,7 @@ internal object BitLevel {
      * @param numberOfBits the number of the lowest bits to check
      * @return false if all bits are 0s, true otherwise
      */
+    @JvmStatic
     fun nonZeroDroppedBits(numberOfBits: Int, digits: IntArray): Boolean {
         val intCount = numberOfBits shr 5
         val bitCount = numberOfBits and 31
@@ -131,6 +135,7 @@ internal object BitLevel {
 
     /** @see BigInteger.shiftRight
      */
+    /* TODO IOS shiftRight not implemented for arrays yet
     fun shiftRight(source: BigInteger, count: Int): BigInteger {
         var count = count
         source.prepareJavaRepresentation()
@@ -167,6 +172,7 @@ internal object BitLevel {
         }
         return BigInteger(source.sign, resLength, resDigits)
     }
+    */
 
     /**
      * Shifts right an array of integers. Total shift distance in bits is
@@ -184,6 +190,7 @@ internal object BitLevel {
      * the number of bits to be shifted
      * @return dropped bit's are all zero (i.e. remaider is zero)
      */
+    /* TODO IOS Problem returning via the result (?)
     fun shiftRight(
         result: IntArray,
         resultLen: Int,
@@ -199,6 +206,7 @@ internal object BitLevel {
             i++
         }
         if (count == 0) {
+            // TODO result = source.copyOfRange(intCount, intCount + resultLen)
             java.lang.System.arraycopy(source, intCount, result, 0, resultLen)
             i = resultLen
         } else {
@@ -215,6 +223,7 @@ internal object BitLevel {
         }
         return allZero
     }
+    */
 
     /**
      * Performs a flipBit on the BigInteger, returning a BigInteger with the the
@@ -225,11 +234,11 @@ internal object BitLevel {
         val resSign = if (`val`.sign == 0) 1 else `val`.sign
         val intCount = n shr 5
         val bitN = n and 31
-        val resLength: Int = java.lang.Math.max(intCount + 1, `val`.numberLength) + 1
-        val resDigits = IntArray(resLength)
+        val resLength: Int = max(intCount + 1, `val`.numberLength) + 1
         var i: Int
         val bitNumber = 1 shl bitN
-        java.lang.System.arraycopy(`val`.digits, 0, resDigits, 0, `val`.numberLength)
+        // java.lang.System.arraycopy(`val`.digits, 0, resDigits, 0, `val`.numberLength)
+        var resDigits = `val`.digits.copyOfRange(0, resLength)
         if (`val`.sign < 0) {
             if (intCount >= `val`.numberLength) {
                 resDigits[intCount] = bitNumber
