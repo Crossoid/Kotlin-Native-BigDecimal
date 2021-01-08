@@ -49,9 +49,9 @@ internal object Division {
         divisor: Int
     ): Int {
         var rem: Long = 0
-        val bLong = (divisor and 0xffffffffL).toLong()
+        val bLong = (divisor.toLong() and 0xffffffffL)
         for (i in dividendLength - 1 downTo 0) {
-            val temp = rem shl 32 or (dividend[i] and 0xffffffffL).toLong()
+            val temp = rem shl 32 or (dividend[i].toLong() and 0xffffffffL)
             var quot: Long
             if (temp >= 0) {
                 quot = temp / bLong
