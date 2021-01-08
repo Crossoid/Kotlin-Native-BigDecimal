@@ -15,21 +15,23 @@
  */
 package kendy.math
 
-import dalvik.annotation.optimization.ReachabilitySensitive
-import libcore.util.NativeAllocationRegistry
+//import dalvik.annotation.optimization.ReachabilitySensitive
+//import libcore.util.NativeAllocationRegistry
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.Transient
 
 /*
  * In contrast to BigIntegers this class doesn't fake two's complement representation.
  * Any Bit-Operations, including Shifting, solely regard the unsigned magnitude.
  * Moreover BigInt objects are mutable and offer efficient in-place-operations.
  */
-internal class BigInt {
+class BigInt {
     /* Fields used for the internal representation. */
-    @ReachabilitySensitive
+    //@ReachabilitySensitive
     @Transient
     private var bignum: Long = 0
     override fun toString(): String {
-        return decString()
+        return decString()!!
     }
 
     fun hasNativeBignum(): Boolean {
@@ -38,14 +40,14 @@ internal class BigInt {
 
     private fun makeValid() {
         if (bignum == 0L) {
-            bignum = kendy.math.NativeBN.BN_new()
-            registry.registerNativeAllocation(this, bignum)
+            bignum = NativeBN.BN_new()
+            // TODO IOS registry.registerNativeAllocation(this, bignum)
         }
     }
 
     fun putCopy(from: BigInt) {
         makeValid()
-        kendy.math.NativeBN.BN_copy(bignum, from.bignum)
+        NativeBN.BN_copy(bignum, from.bignum)
     }
 
     fun copy(): BigInt {
@@ -56,22 +58,22 @@ internal class BigInt {
 
     fun putLongInt(`val`: Long) {
         makeValid()
-        kendy.math.NativeBN.putLongInt(bignum, `val`)
+        NativeBN.putLongInt(bignum, `val`)
     }
 
     fun putULongInt(`val`: Long, neg: Boolean) {
         makeValid()
-        kendy.math.NativeBN.putULongInt(bignum, `val`, neg)
+        NativeBN.putULongInt(bignum, `val`, neg)
     }
 
-    private fun invalidBigInteger(s: String): java.lang.NumberFormatException {
-        throw java.lang.NumberFormatException("Invalid BigInteger: $s")
+    private fun invalidBigInteger(s: String): NumberFormatException {
+        throw NumberFormatException("Invalid BigInteger: $s")
     }
 
     fun putDecString(original: String) {
         val s = checkString(original, 10)
         makeValid()
-        val usedLen: Int = kendy.math.NativeBN.BN_dec2bn(bignum, s)
+        val usedLen: Int = NativeBN.BN_dec2bn(bignum, s)
         if (usedLen < s.length) {
             throw invalidBigInteger(original)
         }
@@ -80,7 +82,7 @@ internal class BigInt {
     fun putHexString(original: String) {
         val s = checkString(original, 16)
         makeValid()
-        val usedLen: Int = kendy.math.NativeBN.BN_hex2bn(bignum, s)
+        val usedLen: Int = NativeBN.BN_hex2bn(bignum, s)
         if (usedLen < s.length) {
             throw invalidBigInteger(original)
         }
@@ -96,7 +98,7 @@ internal class BigInt {
     fun checkString(s: String?, base: Int): String {
         var s = s
         if (s == null) {
-            throw java.lang.NullPointerException("s == null")
+            throw NullPointerException("s == null")
         }
         // A valid big integer consists of an optional '-' or '+' followed by
         // one or more digit characters appropriate to the given base,
@@ -119,7 +121,7 @@ internal class BigInt {
         var nonAscii = false
         while (i < charCount) {
             val ch = s[i]
-            if (java.lang.Character.digit(ch, base) == -1) {
+            if (ch.toString().toIntOrNull(base) == null) {
                 throw invalidBigInteger(s)
             }
             if (ch.toInt() > 128) {
@@ -149,19 +151,19 @@ internal class BigInt {
         return kendy.math.NativeBN.longInt(bignum)
     }
 
-    fun decString(): String {
+    fun decString(): String? {
         return kendy.math.NativeBN.BN_bn2dec(bignum)
     }
 
-    fun hexString(): String {
+    fun hexString(): String? {
         return kendy.math.NativeBN.BN_bn2hex(bignum)
     }
 
-    fun bigEndianMagnitude(): ByteArray {
+    fun bigEndianMagnitude(): ByteArray? {
         return kendy.math.NativeBN.BN_bn2bin(bignum)
     }
 
-    fun littleEndianIntsMagnitude(): IntArray {
+    fun littleEndianIntsMagnitude(): IntArray? {
         return kendy.math.NativeBN.bn2litEndInts(bignum)
     }
 
@@ -211,17 +213,20 @@ internal class BigInt {
     }
 
     companion object {
+        /* TODO IOS Maybe needed?
         private val registry: NativeAllocationRegistry = NativeAllocationRegistry.createMalloced(
             BigInt::class.java.getClassLoader(), kendy.math.NativeBN.getNativeFinalizer()
         )
+        */
 
         private fun newBigInt(): BigInt {
             val bi = BigInt()
-            bi.bignum = kendy.math.NativeBN.BN_new()
-            registry.registerNativeAllocation(bi, bi.bignum)
+            bi.bignum = NativeBN.BN_new()
+            // TODO IOS registry.registerNativeAllocation(bi, bi.bignum)
             return bi
         }
 
+        @JvmStatic
         fun cmp(a: BigInt, b: BigInt): Int {
             return kendy.math.NativeBN.BN_cmp(a.bignum, b.bignum)
         }
@@ -231,11 +236,11 @@ internal class BigInt {
         // This method assumes it's being called on a string that has already been validated.
         private fun toAscii(s: String, base: Int): String {
             val length = s.length
-            val result: java.lang.StringBuilder = java.lang.StringBuilder(length)
+            val result = StringBuilder(length)
             for (i in 0 until length) {
                 var ch = s[i]
-                val value: Int = java.lang.Character.digit(ch, base)
-                if (value >= 0 && value <= 9) {
+                val value = ch.toString().toIntOrNull(base)
+                if (value != null && value >= 0 && value <= 9) {
                     ch = ('0'.toInt() + value).toChar()
                 }
                 result.append(ch)
@@ -244,34 +249,40 @@ internal class BigInt {
         }
 
         // n > 0: shift left (multiply)
+        @JvmStatic
         fun shift(a: BigInt, n: Int): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_shift(r.bignum, a.bignum, n)
             return r
         }
 
+        @JvmStatic
         fun remainderByPositiveInt(a: BigInt, w: Int): Int {
             return kendy.math.NativeBN.BN_mod_word(a.bignum, w)
         }
 
+        @JvmStatic
         fun addition(a: BigInt, b: BigInt): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_add(r.bignum, a.bignum, b.bignum)
             return r
         }
 
+        @JvmStatic
         fun subtraction(a: BigInt, b: BigInt): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_sub(r.bignum, a.bignum, b.bignum)
             return r
         }
 
+        @JvmStatic
         fun gcd(a: BigInt, b: BigInt): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_gcd(r.bignum, a.bignum, b.bignum)
             return r
         }
 
+        @JvmStatic
         fun product(a: BigInt, b: BigInt): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_mul(r.bignum, a.bignum, b.bignum)
@@ -285,6 +296,7 @@ internal class BigInt {
             return r
         }
 
+        @JvmStatic
         fun exp(a: BigInt, p: Int): BigInt {
             // Sign of p is ignored!
             val power = BigInt()
@@ -295,6 +307,7 @@ internal class BigInt {
             // int BN_sqr(BIGNUM *r, const BIGNUM *a,BN_CTX *ctx);
         }
 
+        @JvmStatic
         fun division(dividend: BigInt, divisor: BigInt, quotient: BigInt?, remainder: BigInt?) {
             val quot: Long
             val rem: Long
@@ -313,6 +326,7 @@ internal class BigInt {
             kendy.math.NativeBN.BN_div(quot, rem, dividend.bignum, divisor.bignum)
         }
 
+        @JvmStatic
         fun modulus(a: BigInt, m: BigInt): BigInt {
             // Sign of p is ignored! ?
             val r = newBigInt()
@@ -320,6 +334,7 @@ internal class BigInt {
             return r
         }
 
+        @JvmStatic
         fun modExp(a: BigInt, p: BigInt, m: BigInt): BigInt {
             // Sign of p is ignored!
             val r = newBigInt()
@@ -327,12 +342,14 @@ internal class BigInt {
             return r
         }
 
+        @JvmStatic
         fun modInverse(a: BigInt, m: BigInt): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_mod_inverse(r.bignum, a.bignum, m.bignum)
             return r
         }
 
+        @JvmStatic
         fun generatePrimeDefault(bitLength: Int): BigInt {
             val r = newBigInt()
             kendy.math.NativeBN.BN_generate_prime_ex(r.bignum, bitLength, false, 0, 0)
