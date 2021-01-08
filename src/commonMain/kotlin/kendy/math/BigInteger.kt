@@ -16,7 +16,9 @@
  */
 package kendy.math
 
-import libcore.util.NonNull
+import kotlin.jvm.JvmField
+import kotlin.jvm.JvmStatic
+import kotlin.jvm.Transient
 
 /**
  * An immutable arbitrary-precision signed integer.
@@ -32,7 +34,7 @@ import libcore.util.NonNull
  * this implementation, so such methods may be inefficient. Use [ ] for high-performance bitwise operations on
  * arbitrarily-large sequences of bits.
  */
-class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
+class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     @Transient
     private var bigInt: BigInt? = null
 
@@ -43,6 +45,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
     private var javaIsValid = false
 
     /** The magnitude of this in the little-endian representation.  */
+    @JvmField
     @Transient
     var digits: IntArray
 
@@ -50,10 +53,12 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * The length of this in measured in ints. Can be less than
      * digits.length().
      */
+    @JvmField
     @Transient
     var numberLength = 0
 
     /** The sign of this.  */
+    @JvmField
     @Transient
     var sign = 0
 
@@ -119,7 +124,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param random is the random number generator to be used.
      * @throws IllegalArgumentException if `numBits` < 0.
      */
-    constructor(numBits: Int, @NonNull random: java.util.Random) {
+    constructor(numBits: Int, random: java.util.Random) {
         if (numBits < 0) {
             throw java.lang.IllegalArgumentException("numBits < 0: $numBits")
         }
@@ -156,7 +161,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @see [
      * Specification of random generator used from OpenSSL library](http://www.openssl.org/docs/crypto/BN_rand.html)
      */
-    constructor(bitLength: Int, certainty: Int, @NonNull random: java.util.Random) {
+    constructor(bitLength: Int, certainty: Int, random: java.util.Random) {
         if (bitLength < 2) {
             throw java.lang.ArithmeticException("bitLength < 2: $bitLength")
         }
@@ -193,7 +198,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NumberFormatException if `value` is not a valid
      * representation of a `BigInteger`.
      */
-    constructor(@NonNull value: String?) {
+    constructor(value: String) {
         val bigInt = BigInt()
         bigInt.putDecString(value!!)
         setBigInt(bigInt)
@@ -212,7 +217,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * representation of a `BigInteger` or if `radix <
      * Character.MIN_RADIX` or `radix > Character.MAX_RADIX`.
      */
-    constructor(@NonNull value: String?, radix: Int) {
+    constructor(value: String, radix: Int) {
         if (value == null) {
             throw java.lang.NullPointerException("value == null")
         }
@@ -247,7 +252,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NumberFormatException if the sign is not one of -1, 0, 1 or if
      * the sign is zero and the magnitude contains non-zero entries.
      */
-    constructor(signum: Int, magnitude: @NonNull ByteArray?) {
+    constructor(signum: Int, magnitude: ByteArray) {
         if (magnitude == null) {
             throw java.lang.NullPointerException("magnitude == null")
         }
@@ -275,7 +280,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NullPointerException if `value == null`.
      * @throws NumberFormatException if the length of `value` is zero.
      */
-    constructor(value: @NonNull ByteArray?) {
+    constructor(value: ByteArray) {
         if (value!!.size == 0) {
             throw java.lang.NumberFormatException("value.length == 0")
         }
@@ -342,14 +347,13 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * Returns the two's complement representation of this `BigInteger` in
      * a byte array.
      */
-    fun toByteArray(): @NonNull ByteArray? {
+    fun toByteArray(): ByteArray {
         return twosComplement()
     }
 
     /**
      * Returns a `BigInteger` whose value is the absolute value of `this`.
      */
-    @NonNull
     fun abs(): BigInteger {
         val bigInt = getBigInt()
         if (bigInt!!.sign() >= 0) {
@@ -363,7 +367,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
     /**
      * Returns a `BigInteger` whose value is the `-this`.
      */
-    @NonNull
     fun negate(): BigInteger {
         val bigInt = getBigInt()
         val sign = bigInt!!.sign()
@@ -378,8 +381,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
     /**
      * Returns a `BigInteger` whose value is `this + value`.
      */
-    @NonNull
-    fun add(@NonNull value: BigInteger): BigInteger {
+    fun add(value: BigInteger): BigInteger {
         val lhs = getBigInt()
         val rhs = value.getBigInt()
         if (rhs!!.sign() == 0) {
@@ -393,8 +395,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
     /**
      * Returns a `BigInteger` whose value is `this - value`.
      */
-    @NonNull
-    fun subtract(@NonNull value: BigInteger): BigInteger {
+    fun subtract(value: BigInteger): BigInteger {
         val lhs = getBigInt()
         val rhs = value.getBigInt()
         return if (rhs!!.sign() == 0) {
@@ -427,7 +428,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @return `this >> n` if `n >= 0`; `this << (-n)`
      * otherwise
      */
-    @NonNull
     fun shiftRight(n: Int): BigInteger {
         return shiftLeft(-n)
     }
@@ -446,7 +446,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @return `this << n` if `n >= 0`; `this >> (-n)`.
      * otherwise
      */
-    @NonNull
     fun shiftLeft(n: Int): BigInteger {
         if (n == 0) {
             return this
@@ -551,7 +550,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param n position where the bit in `this` has to be set.
      * @throws ArithmeticException if `n < 0`.
      */
-    @NonNull
     fun setBit(n: Int): BigInteger {
         prepareJavaRepresentation()
         return if (!testBit(n)) {
@@ -573,7 +571,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param n position where the bit in `this` has to be cleared.
      * @throws ArithmeticException if `n < 0`.
      */
-    @NonNull
     fun clearBit(n: Int): BigInteger {
         prepareJavaRepresentation()
         return if (testBit(n)) {
@@ -595,7 +592,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param n position where the bit in `this` has to be flipped.
      * @throws ArithmeticException if `n < 0`.
      */
-    @NonNull
     fun flipBit(n: Int): BigInteger {
         prepareJavaRepresentation()
         if (n < 0) {
@@ -651,7 +647,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * **Implementation Note:** Usage of this method is not recommended as
      * the current implementation is not efficient.
      */
-    @NonNull
     operator fun not(): BigInteger {
         prepareJavaRepresentation()
         return kendy.math.Logical.not(this)
@@ -667,8 +662,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be and'ed with `this`.
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun and(@NonNull value: BigInteger): BigInteger {
+    fun and(value: BigInteger): BigInteger {
         prepareJavaRepresentation()
         value.prepareJavaRepresentation()
         return kendy.math.Logical.and(this, value)
@@ -684,8 +678,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be or'ed with `this`.
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun or(@NonNull value: BigInteger): BigInteger {
+    fun or(value: BigInteger): BigInteger {
         prepareJavaRepresentation()
         value.prepareJavaRepresentation()
         return kendy.math.Logical.or(this, value)
@@ -701,8 +694,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be xor'ed with `this`
      * @throws NullPointerException if `value == null`
      */
-    @NonNull
-    fun xor(@NonNull value: BigInteger): BigInteger {
+    fun xor(value: BigInteger): BigInteger {
         prepareJavaRepresentation()
         value.prepareJavaRepresentation()
         return kendy.math.Logical.xor(this, value)
@@ -719,8 +711,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be not'ed and then and'ed with `this`.
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun andNot(@NonNull value: BigInteger): BigInteger {
+    fun andNot(value: BigInteger): BigInteger {
         prepareJavaRepresentation()
         value.prepareJavaRepresentation()
         return kendy.math.Logical.andNot(this, value)
@@ -784,7 +775,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be compared with `this`.
      * @throws NullPointerException if `value == null`.
      */
-    override operator fun compareTo(@NonNull value: BigInteger): Int {
+    override operator fun compareTo(value: BigInteger): Int {
         return BigInt.cmp(getBigInt()!!, value.getBigInt()!!)
     }
 
@@ -794,8 +785,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be used to compute the minimum with `this`.
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun min(@NonNull value: BigInteger): BigInteger {
+    fun min(value: BigInteger): BigInteger {
         return if (this.compareTo(value) == -1) this else value
     }
 
@@ -805,8 +795,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value to be used to compute the maximum with `this`
      * @throws NullPointerException if `value == null`
      */
-    @NonNull
-    fun max(@NonNull value: BigInteger): BigInteger {
+    fun max(value: BigInteger): BigInteger {
         return if (this.compareTo(value) == 1) this else value
     }
 
@@ -835,7 +824,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * Returns a string representation of this `BigInteger` in decimal
      * form.
      */
-    @NonNull
     override fun toString(): String {
         return getBigInt()!!.decString()
     }
@@ -848,7 +836,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      *
      * @param radix base to be used for the string representation.
      */
-    @NonNull
     fun toString(radix: Int): String {
         return if (radix == 10) {
             getBigInt()!!.decString()
@@ -865,8 +852,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @param value value with which the greatest common divisor is computed.
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun gcd(@NonNull value: BigInteger): BigInteger {
+    fun gcd(value: BigInteger): BigInteger {
         return BigInteger(BigInt.gcd(getBigInt()!!, value.getBigInt()!!))
     }
 
@@ -875,8 +861,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      *
      * @throws NullPointerException if `value == null`.
      */
-    @NonNull
-    fun multiply(@NonNull value: BigInteger): BigInteger {
+    fun multiply(value: BigInteger): BigInteger {
         return BigInteger(BigInt.product(getBigInt()!!, value.getBigInt()!!))
     }
 
@@ -885,7 +870,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      *
      * @throws ArithmeticException if `exp < 0`.
      */
-    @NonNull
     fun pow(exp: Int): BigInteger {
         if (exp < 0) {
             throw java.lang.ArithmeticException("exp < 0: $exp")
@@ -904,8 +888,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      *
      * @see .remainder
      */
-    @NonNull
-    fun divideAndRemainder(@NonNull divisor: BigInteger): @NonNull Array<BigInteger>? {
+    fun divideAndRemainder(divisor: BigInteger): Array<BigInteger> {
         val divisorBigInt = divisor.getBigInt()
         val quotient = BigInt()
         val remainder = BigInt()
@@ -921,8 +904,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NullPointerException if `divisor == null`.
      * @throws ArithmeticException if `divisor == 0`.
      */
-    @NonNull
-    fun divide(@NonNull divisor: BigInteger): BigInteger {
+    fun divide(divisor: BigInteger): BigInteger {
         val quotient = BigInt()
         BigInt.division(getBigInt()!!, divisor.getBigInt()!!, quotient, null)
         return BigInteger(quotient)
@@ -937,8 +919,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NullPointerException if `divisor == null`.
      * @throws ArithmeticException if `divisor == 0`.
      */
-    @NonNull
-    fun remainder(@NonNull divisor: BigInteger): BigInteger {
+    fun remainder(divisor: BigInteger): BigInteger {
         val remainder = BigInt()
         BigInt.division(getBigInt()!!, divisor.getBigInt()!!, null, remainder)
         return BigInteger(remainder)
@@ -955,8 +936,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws ArithmeticException if `m < 0 or` if `this` is not
      * relatively prime to `m`
      */
-    @NonNull
-    fun modInverse(@NonNull m: BigInteger): BigInteger {
+    fun modInverse(m: BigInteger): BigInteger {
         if (m.signum() <= 0) {
             throw java.lang.ArithmeticException("modulus not positive")
         }
@@ -975,8 +955,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws ArithmeticException if `modulus < 0` or if `exponent < 0` and
      * not relatively prime to `modulus`.
      */
-    @NonNull
-    fun modPow(@NonNull exponent: BigInteger, @NonNull modulus: BigInteger): BigInteger {
+    fun modPow(exponent: BigInteger, modulus: BigInteger): BigInteger {
         if (modulus.signum() <= 0) {
             throw java.lang.ArithmeticException("modulus.signum() <= 0")
         }
@@ -1006,8 +985,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @throws NullPointerException if `m == null`.
      * @throws ArithmeticException if `m < 0`.
      */
-    @NonNull
-    operator fun mod(@NonNull m: BigInteger): BigInteger {
+    operator fun mod(m: BigInteger): BigInteger {
         if (m.signum() <= 0) {
             throw java.lang.ArithmeticException("m.signum() <= 0")
         }
@@ -1038,7 +1016,6 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
      * @return smallest integer > `this` which is probably prime.
      * @throws ArithmeticException if `this < 0`.
      */
-    @NonNull
     fun nextProbablePrime(): BigInteger {
         if (sign < 0) {
             throw java.lang.ArithmeticException("sign < 0")
@@ -1158,18 +1135,19 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
         private const val serialVersionUID = -8287574255936472291L
 
         /** The `BigInteger` constant 0.  */
-        @NonNull
+        @JvmField
         val ZERO: BigInteger = BigInteger(0, 0)
 
         /** The `BigInteger` constant 1.  */
-        @NonNull
+        @JvmField
         val ONE: BigInteger = BigInteger(1, 1)
 
         /** The `BigInteger` constant 10.  */
-        @NonNull
+        @JvmField
         val TEN: BigInteger = BigInteger(1, 10)
 
         /** The `BigInteger` constant -1.  */
+        @JvmField
         val MINUS_ONE: BigInteger = BigInteger(-1, 1)
 
         /** All the `BigInteger` numbers in the range [0,10] are cached.  */
@@ -1199,7 +1177,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
         }
 
         /** Returns a `BigInteger` whose value is equal to `value`.  */
-        @NonNull
+        @JvmStatic
         fun valueOf(value: Long): BigInteger {
             return if (value < 0) {
                 if (value != -1L) {
@@ -1220,8 +1198,7 @@ class BigInteger : Number, Comparable<BigInteger?>, java.io.Serializable {
          * @return probably prime random `BigInteger` instance.
          * @throws IllegalArgumentException if `bitLength < 2`.
          */
-        @NonNull
-        fun probablePrime(bitLength: Int, @NonNull random: java.util.Random?): BigInteger {
+        fun probablePrime(bitLength: Int, random: java.util.Random): BigInteger {
             return BigInteger(bitLength, 100, random)
         }
 
