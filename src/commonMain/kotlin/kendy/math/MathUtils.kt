@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package libcore.math
 
-package libcore.math;
-
-public final class MathUtils {
-    private MathUtils() { }
-
+object MathUtils {
     /**
-     * An array with powers of ten that fit in the type <code>long</code>
-     * (<code>10^0,10^1,...,10^18</code>).
+     * An array with powers of ten that fit in the type `long`
+     * (`10^0,10^1,...,10^18`).
      */
-    public static final long[] LONG_POWERS_OF_TEN = new long[] {
+    val LONG_POWERS_OF_TEN = longArrayOf(
         1L,
         10L,
         100L,
@@ -42,7 +39,6 @@ public final class MathUtils {
         1000000000000000L,
         10000000000000000L,
         100000000000000000L,
-        1000000000000000000L,
-    };
-
+        1000000000000000000L
+    )
 }
