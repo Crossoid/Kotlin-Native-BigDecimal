@@ -16,6 +16,8 @@
  */
 package kendy.math
 
+import kotlin.jvm.JvmStatic
+
 /**
  * Specifies the rounding behavior for operations whose results cannot be
  * represented exactly.
@@ -92,6 +94,7 @@ enum class RoundingMode
          * rounding mode constant as defined in class `BigDecimal`
          * @return corresponding rounding mode object
          */
+        @JvmStatic
         fun valueOf(mode: Int): RoundingMode {
             return when (mode) {
                 kendy.math.BigDecimal.ROUND_CEILING -> CEILING
@@ -102,7 +105,7 @@ enum class RoundingMode
                 kendy.math.BigDecimal.ROUND_HALF_UP -> HALF_UP
                 kendy.math.BigDecimal.ROUND_UNNECESSARY -> UNNECESSARY
                 kendy.math.BigDecimal.ROUND_UP -> UP
-                else -> throw java.lang.IllegalArgumentException("Invalid rounding mode")
+                else -> throw IllegalArgumentException("Invalid rounding mode")
             }
         }
     }
