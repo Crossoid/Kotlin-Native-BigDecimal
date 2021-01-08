@@ -126,6 +126,5 @@ internal object NativeBN {
     //                       BN_CTX *ctx, int do_trial_division, BN_GENCB *cb);
     // Returns *is_probably_prime on success and throws an exception on error.
     // &BN_free
-    val nativeFinalizer: Long
-        external get
+    external fun getNativeFinalizer(): Long
 }
