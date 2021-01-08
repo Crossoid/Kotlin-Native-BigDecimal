@@ -61,12 +61,12 @@ internal object Multiplication {
     // END android-note
     /**
      * Multiplies a number by a positive integer.
-     * @param val an arbitrary `BigInteger`
+     * @param value an arbitrary `BigInteger`
      * @param factor a positive `int` number
      * @return `val * factor`
      */
-    fun multiplyByPositiveInt(`val`: BigInteger, factor: Int): BigInteger {
-        val bi = `val`.getBigInt()!!.copy()
+    fun multiplyByPositiveInt(value: BigInteger, factor: Int): BigInteger {
+        val bi = value.getBigInt()!!.copy()
         bi.multiplyByPositiveInt(factor)
         return BigInteger(bi)
     }
@@ -74,16 +74,16 @@ internal object Multiplication {
     /**
      * Multiplies a number by a power of ten.
      * This method is used in `BigDecimal` class.
-     * @param val the number to be multiplied
+     * @param value the number to be multiplied
      * @param exp a positive `long` exponent
      * @return `val * 10<sup>exp</sup>`
      */
-    fun multiplyByTenPow(`val`: BigInteger, exp: Long): BigInteger {
+    fun multiplyByTenPow(value: BigInteger, exp: Long): BigInteger {
         // PRE: exp >= 0
         return if (exp < tenPows.size) multiplyByPositiveInt(
-            `val`,
+            value,
             tenPows[exp.toInt()]
-        ) else `val`.multiply(
+        ) else value.multiply(
             powerOf10(exp)!!
         )
     }
@@ -148,21 +148,21 @@ internal object Multiplication {
     /**
      * Multiplies a number by a power of five.
      * This method is used in `BigDecimal` class.
-     * @param val the number to be multiplied
+     * @param value the number to be multiplied
      * @param exp a positive `int` exponent
      * @return `val * 5<sup>exp</sup>`
      */
-    fun multiplyByFivePow(`val`: BigInteger, exp: Int): BigInteger {
+    fun multiplyByFivePow(value: BigInteger, exp: Int): BigInteger {
         // PRE: exp >= 0
         return if (exp < fivePows.size) {
             multiplyByPositiveInt(
-                `val`,
+                value,
                 fivePows[exp]
             )
         } else if (exp < bigFivePows.size) {
-            `val`.multiply(bigFivePows[exp]!!)
+            value.multiply(bigFivePows[exp]!!)
         } else { // Large powers of five
-            `val`.multiply(bigFivePows[1]!!.pow(exp))
+            value.multiply(bigFivePows[1]!!.pow(exp))
         }
     }
 
