@@ -14,78 +14,76 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package java.math;
+package kendy.math
 
 /**
  * Static library that provides all operations related with division and modular
- * arithmetic to {@link BigInteger}. Some methods are provided in both mutable
+ * arithmetic to [BigInteger]. Some methods are provided in both mutable
  * and immutable way. There are several variants provided listed below:
  *
- * <ul type="circle">
- * <li> <b>Division</b>
- * <ul type="circle">
- * <li>{@link BigInteger} division and remainder by {@link BigInteger}.</li>
- * <li>{@link BigInteger} division and remainder by {@code int}.</li>
- * <li><i>gcd</i> between {@link BigInteger} numbers.</li>
- * </ul>
- * </li>
- * <li> <b>Modular arithmetic </b>
- * <ul type="circle">
- * <li>Modular exponentiation between {@link BigInteger} numbers.</li>
- * <li>Modular inverse of a {@link BigInteger} numbers.</li>
- * </ul>
- * </li>
- *</ul>
+ *
+ *  *  **Division**
+ *
+ *  * [BigInteger] division and remainder by [BigInteger].
+ *  * [BigInteger] division and remainder by `int`.
+ *  * *gcd* between [BigInteger] numbers.
+ *
+ *
+ *  *  **Modular arithmetic **
+ *
+ *  * Modular exponentiation between [BigInteger] numbers.
+ *  * Modular inverse of a [BigInteger] numbers.
+ *
+ *
+ *
  */
-class Division {
-
+internal object Division {
     /**
      * Divides an array by an integer value. Implements the Knuth's division
      * algorithm. See D. Knuth, The Art of Computer Programming, vol. 2.
      *
      * @return remainder
      */
-    static int divideArrayByInt(int[] quotient, int[] dividend, final int dividendLength,
-            final int divisor) {
-
-        long rem = 0;
-        long bLong = divisor & 0xffffffffL;
-
-        for (int i = dividendLength - 1; i >= 0; i--) {
-            long temp = (rem << 32) | (dividend[i] & 0xffffffffL);
-            long quot;
+    fun divideArrayByInt(
+        quotient: IntArray, dividend: IntArray, dividendLength: Int,
+        divisor: Int
+    ): Int {
+        var rem: Long = 0
+        val bLong = (divisor and 0xffffffffL).toLong()
+        for (i in dividendLength - 1 downTo 0) {
+            val temp = rem shl 32 or (dividend[i] and 0xffffffffL).toLong()
+            var quot: Long
             if (temp >= 0) {
-                quot = (temp / bLong);
-                rem = (temp % bLong);
+                quot = temp / bLong
+                rem = temp % bLong
             } else {
                 /*
                  * make the dividend positive shifting it right by 1 bit then
                  * get the quotient an remainder and correct them properly
                  */
-                long aPos = temp >>> 1;
-                long bPos = divisor >>> 1;
-                quot = aPos / bPos;
-                rem = aPos % bPos;
+                val aPos = temp ushr 1
+                val bPos = (divisor ushr 1).toLong()
+                quot = aPos / bPos
+                rem = aPos % bPos
                 // double the remainder and add 1 if a is odd
-                rem = (rem << 1) + (temp & 1);
-                if ((divisor & 1) != 0) {
+                rem = (rem shl 1) + (temp and 1)
+                if (divisor and 1 != 0) {
                     // the divisor is odd
                     if (quot <= rem) {
-                        rem -= quot;
+                        rem -= quot
                     } else {
                         if (quot - rem <= bLong) {
-                            rem += bLong - quot;
-                            quot -= 1;
+                            rem += bLong - quot
+                            quot -= 1
                         } else {
-                            rem += (bLong << 1) - quot;
-                            quot -= 2;
+                            rem += (bLong shl 1) - quot
+                            quot -= 2
                         }
                     }
                 }
             }
-            quotient[i] = (int) (quot & 0xffffffffL);
+            quotient[i] = (quot and 0xffffffffL).toInt()
         }
-        return (int) rem;
+        return rem.toInt()
     }
 }
