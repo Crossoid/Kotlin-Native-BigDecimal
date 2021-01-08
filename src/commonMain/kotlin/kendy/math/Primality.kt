@@ -93,7 +93,7 @@ internal object Primality {
         while (true) {
             // At this point, all numbers in the gap are initialized as
             // probably primes
-            java.util.Arrays.fill(isDivisible, false)
+            isDivisible.fill(false)
             // To discard multiples of first primes
             i = 0
             while (i < primes.size) {
