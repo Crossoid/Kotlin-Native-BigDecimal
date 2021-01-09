@@ -17,6 +17,7 @@
 package kendy.math
 
 import kendy.math.BitLevel.nonZeroDroppedBits
+import kotlin.math.*
 
 /**
  * Static library that provides [BigInteger] base conversion from/to any
@@ -60,19 +61,19 @@ internal object Conversion {
         }
         if (numberLength == 1) {
             val highDigit = digits[numberLength - 1]
-            var v = (highDigit and 0xFFFFFFFFL).toLong()
+            var v = highDigit.toLong() and 0xFFFFFFFFL
             if (sign < 0) {
                 v = -v
             }
-            return java.lang.Long.toString(v, radix)
+            return v.toString(radix)
         }
-        if (radix == 10 || radix < java.lang.Character.MIN_RADIX
-            || radix > java.lang.Character.MAX_RADIX
+        if (radix == 10 // TODO IOS || radix < java.lang.Character.MIN_RADIX
+            // TODO IOS || radix > java.lang.Character.MAX_RADIX
         ) {
             return `val`.toString()
         }
         val bitsForRadixDigit: Double
-        bitsForRadixDigit = java.lang.Math.log(radix.toDouble()) / java.lang.Math.log(2.0)
+        bitsForRadixDigit = log2(radix.toDouble())
         val resLengthInChars =
             (`val`.abs().bitLength() / bitsForRadixDigit + if (sign < 0) 1 else 0).toInt() + 1
         val result = CharArray(resLengthInChars)
@@ -80,7 +81,7 @@ internal object Conversion {
         var resDigit: Int
         if (radix != 16) {
             val temp = IntArray(numberLength)
-            java.lang.System.arraycopy(digits, 0, temp, 0, numberLength)
+            digits.copyInto(temp, 0, 0, numberLength)
             var tempLen = numberLength
             val charsPerInt = digitFitInInt[radix]
             var i: Int
@@ -95,9 +96,7 @@ internal object Conversion {
                 )
                 val previous = currentChar
                 do {
-                    result[--currentChar] = java.lang.Character.forDigit(
-                        resDigit % radix, radix
-                    )
+                    result[--currentChar] = (resDigit % radix).toString(radix)[0]
                 } while (radix.let { resDigit /= it; resDigit } != 0 && currentChar != 0)
                 val delta = charsPerInt - previous + currentChar
                 i = 0
@@ -120,7 +119,7 @@ internal object Conversion {
                 var j = 0
                 while (j < 8 && currentChar > 0) {
                     resDigit = digits[i] shr (j shl 2) and 0xf
-                    result[--currentChar] = java.lang.Character.forDigit(resDigit, 16)
+                    result[--currentChar] = resDigit.toString(16)[0]
                     j++
                 }
             }
@@ -159,7 +158,7 @@ internal object Conversion {
                 5 -> "0.00000"
                 6 -> "0.000000"
                 else -> {
-                    val result1: java.lang.StringBuilder = java.lang.StringBuilder()
+                    val result1 = StringBuilder()
                     if (scale < 0) {
                         result1.append("0E+")
                     } else {
@@ -184,7 +183,7 @@ internal object Conversion {
         if (numberLength == 1) {
             val highDigit = digits[0]
             if (highDigit < 0) {
-                var v = (highDigit and 0xFFFFFFFFL).toLong()
+                var v = highDigit.toLong() and 0xFFFFFFFFL
                 do {
                     val prev = v
                     v /= 10
@@ -201,7 +200,7 @@ internal object Conversion {
         } else {
             val temp = IntArray(numberLength)
             var tempLen = numberLength
-            java.lang.System.arraycopy(digits, 0, temp, 0, tempLen)
+            digits.copyInto(temp, 0, 0, tempLen)
             BIG_LOOP@ while (true) {
                 // divide the array of digits by bigRadix and convert
                 // remainders
@@ -209,10 +208,10 @@ internal object Conversion {
                 var result11: Long = 0
                 for (i1 in tempLen - 1 downTo 0) {
                     val temp1 = ((result11 shl 32)
-                            + (temp[i1] and 0xFFFFFFFFL))
+                            + (temp[i1].toLong() and 0xFFFFFFFFL))
                     val res = divideLongByBillion(temp1)
                     temp[i1] = res.toInt()
-                    result11 = (res shr 32) as Int.toLong()
+                    result11 = ((res shr 32) as Int).toLong()
                 }
                 var resDigit = result11.toInt()
                 val previous = currentChar
@@ -280,8 +279,7 @@ internal object Conversion {
             )
         }
         val startPoint = currentChar + 1
-        val result1: java.lang.StringBuilder =
-            java.lang.StringBuilder(16 + resLengthInChars - startPoint)
+        val result1 = StringBuilder(16 + resLengthInChars - startPoint)
         if (negNumber) {
             result1.append('-')
         }
@@ -302,7 +300,7 @@ internal object Conversion {
         if (exponent > 0) {
             result1.append('+')
         }
-        result1.append(java.lang.Integer.toString(exponent))
+        result1.append(exponent.toString())
         return result1.toString()
     }
 
@@ -326,16 +324,14 @@ internal object Conversion {
                 5 -> "0.00000"
                 6 -> "0.000000"
                 else -> {
-                    val result1: java.lang.StringBuilder = java.lang.StringBuilder()
+                    val result1 = StringBuilder()
                     if (scale < 0) {
                         result1.append("0E+")
                     } else {
                         result1.append("0E")
                     }
                     result1.append(
-                        if (scale == Int.MIN_VALUE) "2147483648" else java.lang.Integer.toString(
-                            -scale
-                        )
+                        if (scale == Int.MIN_VALUE) "2147483648" else (-scale).toString()
                     )
                     result1.toString()
                 }
@@ -389,8 +385,7 @@ internal object Conversion {
             return String(result, currentChar, resLengthInChars - currentChar)
         }
         val startPoint = currentChar + 1
-        val result1: java.lang.StringBuilder =
-            java.lang.StringBuilder(16 + resLengthInChars - startPoint)
+        val result1 = StringBuilder(16 + resLengthInChars - startPoint)
         if (negNumber) {
             result1.append('-')
         }
@@ -405,7 +400,7 @@ internal object Conversion {
         if (exponent > 0) {
             result1.append('+')
         }
-        result1.append(java.lang.Long.toString(exponent))
+        result1.append(exponent.toString())
         return result1.toString()
     }
 
@@ -439,7 +434,7 @@ internal object Conversion {
         if (`val`.numberLength < 2
             || `val`.numberLength == 2 && `val`.digits[1] > 0
         ) {
-            return `val`.longValue().toDouble()
+            return `val`.toLong().toDouble()
         }
         // val.bitLength() >= 33 * 32 > 1024
         if (`val`.numberLength > 32) {
@@ -449,7 +444,7 @@ internal object Conversion {
         var exponent = (bitLen - 1).toLong()
         val delta = bitLen - 54
         // We need 54 top bits from this, the 53th bit is always 1 in lVal.
-        val lVal = `val`.abs().shiftRight(delta).longValue()
+        val lVal = `val`.abs().shiftRight(delta).toLong()
         /*
          * Take 53 bits from lVal to mantissa. The least significant bit is
          * needed for rounding.
@@ -473,9 +468,9 @@ internal object Conversion {
             mantissa += 2
         }
         mantissa = mantissa shr 1 // drop the rounding bit
-        val resSign = if (`val`.sign < 0) (-0x8000000000000000L).toLong() else 0
+        val resSign = if (`val`.sign < 0) (-(1L shl 63)) else 0
         exponent = 1023 + exponent shl 52 and 0x7FF0000000000000L
         val result = resSign or exponent or mantissa
-        return java.lang.Double.longBitsToDouble(result)
+        return Double.fromBits(result)
     }
 }
