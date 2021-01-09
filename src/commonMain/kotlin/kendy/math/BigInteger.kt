@@ -431,11 +431,9 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
      * @return `this >> n` if `n >= 0`; `this << (-n)`
      * otherwise
      */
-    /* TODO IOS
     fun shiftRight(n: Int): BigInteger {
         return shiftLeft(-n)
     }
-    */
 
     /**
      * Returns a `BigInteger` whose value is `this << n`. The
@@ -451,7 +449,6 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
      * @return `this << n` if `n >= 0`; `this >> (-n)`.
      * otherwise
      */
-    /* TODO IOS
     fun shiftLeft(n: Int): BigInteger {
         if (n == 0) {
             return this
@@ -469,7 +466,6 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             kendy.math.BitLevel.shiftRight(this, -n)
         }
     }
-    */
 
     fun shiftLeftOneBit(): BigInteger {
         return if (signum() == 0) this else kendy.math.BitLevel.shiftLeftOneBit(this)

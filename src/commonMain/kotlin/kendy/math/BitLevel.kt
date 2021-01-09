@@ -135,7 +135,6 @@ internal object BitLevel {
 
     /** @see BigInteger.shiftRight
      */
-    /* TODO IOS shiftRight not implemented for arrays yet
     fun shiftRight(source: BigInteger, count: Int): BigInteger {
         var count = count
         source.prepareJavaRepresentation()
@@ -172,7 +171,6 @@ internal object BitLevel {
         }
         return BigInteger(source.sign, resLength, resDigits)
     }
-    */
 
     /**
      * Shifts right an array of integers. Total shift distance in bits is
@@ -190,7 +188,6 @@ internal object BitLevel {
      * the number of bits to be shifted
      * @return dropped bit's are all zero (i.e. remaider is zero)
      */
-    /* TODO IOS Problem returning via the result (?)
     fun shiftRight(
         result: IntArray,
         resultLen: Int,
@@ -206,8 +203,7 @@ internal object BitLevel {
             i++
         }
         if (count == 0) {
-            // TODO result = source.copyOfRange(intCount, intCount + resultLen)
-            java.lang.System.arraycopy(source, intCount, result, 0, resultLen)
+            source.copyInto(result, 0, intCount, intCount + resultLen)
             i = resultLen
         } else {
             val leftShiftCount = 32 - count
@@ -223,7 +219,6 @@ internal object BitLevel {
         }
         return allZero
     }
-    */
 
     /**
      * Performs a flipBit on the BigInteger, returning a BigInteger with the the
@@ -235,10 +230,10 @@ internal object BitLevel {
         val intCount = n shr 5
         val bitN = n and 31
         val resLength: Int = max(intCount + 1, `val`.numberLength) + 1
+        val resDigits = IntArray(resLength)
         var i: Int
         val bitNumber = 1 shl bitN
-        // java.lang.System.arraycopy(`val`.digits, 0, resDigits, 0, `val`.numberLength)
-        var resDigits = `val`.digits.copyOfRange(0, resLength)
+        `val`.digits.copyInto(resDigits, 0, 0, `val`.numberLength)
         if (`val`.sign < 0) {
             if (intCount >= `val`.numberLength) {
                 resDigits[intCount] = bitNumber

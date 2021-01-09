@@ -239,7 +239,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             thisValue: BigDecimal,
             augend: BigDecimal,
             diffScale: Int
-        ): BigDecimal? {
+        ): BigDecimal {
             return if (diffScale < MathUtils.LONG_POWERS_OF_TEN.size &&
                 max(
                     thisValue.bitLength,
@@ -267,7 +267,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             scaledDivisor: BigInteger,
             scale: Int,
             roundingMode: RoundingMode
-        ): BigDecimal? {
+        ): BigDecimal {
             val quotAndRem =
                 scaledDividend.divideAndRemainder(scaledDivisor) // quotient and remainder
             // If after division there is a remainder...
@@ -279,8 +279,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             val sign = scaledDividend.signum() * scaledDivisor.signum()
             var compRem: Int // 'compare to remainder'
             if (scaledDivisor.bitLength() < 63) { // 63 in order to avoid out of long after *2
-                val rem = remainder.longValue()
-                val divisor = scaledDivisor.longValue()
+                val rem = remainder.toLong()
+                val divisor = scaledDivisor.toLong()
                 compRem = compareForRounding(rem, divisor)
                 // To look if there is a carry
                 compRem = roundingBehavior(
@@ -297,7 +297,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             }
             if (compRem != 0) {
                 if (quotient.bitLength() < 63) {
-                    return valueOf(quotient.longValue() + compRem, scale)
+                    return valueOf(quotient.toLong() + compRem, scale)
                 }
                 quotient = quotient.add(BigInteger.valueOf(compRem.toLong()))
                 return BigDecimal(quotient, scale)
@@ -311,7 +311,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             scaledDivisor: Long,
             scale: Int,
             roundingMode: RoundingMode
-        ): BigDecimal? {
+        ): BigDecimal {
             var quotient = scaledDividend / scaledDivisor
             val remainder = scaledDividend % scaledDivisor
             val sign: Int = scaledDividend.sign * scaledDivisor.sign
@@ -952,8 +952,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `augend == null`.
      */
-    fun add(augend: BigDecimal): BigDecimal? {
-        val diffScale = scale - augend.scale
+    fun add(augend: BigDecimal?): BigDecimal {
+        val diffScale = scale - augend!!.scale
         // Fast return when some operand is zero
         if (isZero) {
             if (diffScale <= 0) {
@@ -999,7 +999,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `augend == null` or `mc == null`.
      */
-    fun add(augend: BigDecimal, mc: kendy.math.MathContext): BigDecimal {
+    fun add(augend: BigDecimal, mc: MathContext?): BigDecimal {
         var larger: BigDecimal // operand with the largest unscaled value
         val smaller: BigDecimal // operand with the smallest unscaled value
         var tempBI: BigInteger
@@ -1007,7 +1007,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         val largerSignum: Int
         // Some operand is zero or the precision is infinity
         if (augend.isZero || isZero
-            || mc.precision == 0
+            || mc!!.precision == 0
         ) {
             return add(augend)!!.round(mc)
         }
@@ -1052,7 +1052,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `subtrahend == null`.
      */
-    fun subtract(subtrahend: BigDecimal?): BigDecimal? {
+    fun subtract(subtrahend: BigDecimal?): BigDecimal {
         var diffScale = scale - subtrahend!!.scale
         // Fast return when some operand is zero
         if (isZero) {
@@ -1124,14 +1124,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `subtrahend == null` or `mc == null`.
      */
-    fun subtract(subtrahend: BigDecimal, mc: kendy.math.MathContext): BigDecimal {
+    fun subtract(subtrahend: BigDecimal, mc: MathContext?): BigDecimal {
         val diffScale = subtrahend.scale - scale.toLong()
         val thisSignum: Int
         val leftOperand: BigDecimal // it will be only the left operand (this)
         var tempBI: BigInteger
         // Some operand is zero or the precision is infinity
         if (subtrahend.isZero || isZero
-            || mc.precision == 0
+            || mc!!.precision == 0
         ) {
             return subtract(subtrahend)!!.round(mc)
         }
@@ -1168,7 +1168,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `multiplicand == null`.
      */
-    fun multiply(multiplicand: BigDecimal?): BigDecimal? {
+    fun multiply(multiplicand: BigDecimal?): BigDecimal {
         val newScale = scale.toLong() + multiplicand!!.scale
         if (isZero || multiplicand.isZero) {
             return zeroScaledBy(newScale)
@@ -1203,9 +1203,9 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws NullPointerException
      * if `multiplicand == null` or `mc == null`.
      */
-    fun multiply(multiplicand: BigDecimal?, mc: kendy.math.MathContext): BigDecimal? {
+    fun multiply(multiplicand: BigDecimal?, mc: MathContext?): BigDecimal {
         val result = multiply(multiplicand)
-        result!!.inplaceRound(mc)
+        result!!.inplaceRound(mc!!)
         return result
     }
 
@@ -1394,7 +1394,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws ArithmeticException
      * if the result cannot be represented exactly.
      */
-    fun divide(divisor: BigDecimal?): BigDecimal? {
+    fun divide(divisor: BigDecimal?): BigDecimal {
         var p = unscaledValue!!
         var q = divisor!!.unscaledValue!!
         val gcd: BigInteger // greatest common divisor between 'p' and 'q'
@@ -1469,10 +1469,10 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `mc.roundingMode() == UNNECESSARY` and rounding
      * is necessary according `mc.precision`.
      */
-    fun divide(divisor: BigDecimal?, mc: kendy.math.MathContext): BigDecimal? {
+    fun divide(divisor: BigDecimal?, mc: kendy.math.MathContext?): BigDecimal {
         /* Calculating how many zeros must be append to 'dividend'
          * to obtain a  quotient with at least 'mc.precision()' digits */
-        val trailingZeros: Long = (mc.precision + 2L
+        val trailingZeros: Long = (mc!!.precision + 2L
                 + divisor!!.approxPrecision()) - approxPrecision()
         val diffScale = scale.toLong() - divisor.scale
         var newScale = diffScale // scale of the final quotient
@@ -1484,7 +1484,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             unscaledValue
         )
         // In special cases it reduces the problem to call the dual method
-        if (mc.precision == 0 || isZero
+        if (mc!!.precision == 0 || isZero
             || divisor.isZero
         ) {
             return this.divide(divisor)
@@ -1614,9 +1614,9 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `mc.precision > 0` and the result requires more
      * digits to be represented.
      */
-    fun divideToIntegralValue(divisor: BigDecimal, mc: kendy.math.MathContext): BigDecimal? {
-        val mcPrecision: Int = mc.precision
-        val diffPrecision = precision() - divisor.precision()
+    fun divideToIntegralValue(divisor: BigDecimal?, mc: MathContext?): BigDecimal {
+        val mcPrecision: Int = mc!!.precision
+        val diffPrecision = precision() - divisor!!.precision()
         val lastPow = TEN_POW.size - 1
         val diffScale = scale.toLong() - divisor.scale
         var newScale = diffScale
@@ -1729,8 +1729,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws ArithmeticException
      * if `divisor == 0`.
      */
-    fun remainder(divisor: BigDecimal): BigDecimal? {
-        return divideAndRemainder(divisor)[1]
+    fun remainder(divisor: BigDecimal?): BigDecimal {
+        return divideAndRemainder(divisor!!)[1]
     }
 
     /**
@@ -1756,7 +1756,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `mc.precision > 0` and the result of `this.divideToIntegralValue(divisor, mc)` requires more digits
      * to be represented.
      */
-    fun remainder(divisor: BigDecimal, mc: kendy.math.MathContext): BigDecimal? {
+    fun remainder(divisor: BigDecimal?, mc: kendy.math.MathContext?): BigDecimal {
         return divideAndRemainder(divisor, mc)[1]
     }
 
@@ -1778,10 +1778,12 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      *
      * @see .remainder
      */
-    fun divideAndRemainder(divisor: BigDecimal): Array<BigDecimal?> {
-        val quotAndRem = arrayOfNulls<BigDecimal>(2)
-        quotAndRem[0] = this.divideToIntegralValue(divisor)
-        quotAndRem[1] = this.subtract(quotAndRem[0]!!.multiply(divisor))
+    fun divideAndRemainder(divisor: BigDecimal): Array<BigDecimal> {
+        val q: BigDecimal = this.divideToIntegralValue(divisor)
+        val r: BigDecimal = this.subtract(q!!.multiply(divisor))
+
+        val quotAndRem = arrayOf(q, r)
+
         return quotAndRem
     }
 
@@ -1808,10 +1810,12 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      *
      * @see .remainder
      */
-    fun divideAndRemainder(divisor: BigDecimal, mc: kendy.math.MathContext): Array<BigDecimal?> {
-        val quotAndRem = arrayOfNulls<BigDecimal>(2)
-        quotAndRem[0] = this.divideToIntegralValue(divisor, mc)
-        quotAndRem[1] = this.subtract(quotAndRem[0]!!.multiply(divisor))
+    fun divideAndRemainder(divisor: BigDecimal?, mc: kendy.math.MathContext?): Array<BigDecimal> {
+        val q: BigDecimal = this.divideToIntegralValue(divisor, mc)
+        val r: BigDecimal = this.subtract(q.multiply(divisor))
+
+        val quotAndRem = arrayOf(q, r)
+
         return quotAndRem
     }
 
@@ -1829,7 +1833,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws ArithmeticException
      * if `n < 0` or `n > 999999999`.
      */
-    fun pow(n: Int): BigDecimal? {
+    fun pow(n: Int): BigDecimal {
         if (n == 0) {
             return ONE
         }
@@ -1903,7 +1907,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * Returns a `BigDecimal` whose value is the absolute value of
      * `this`. The scale of the result is the same as the scale of this.
      */
-    fun abs(): BigDecimal? {
+    fun abs(): BigDecimal {
         return if (signum() < 0) negate() else this
     }
 
@@ -1912,7 +1916,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * `this`. The result is rounded according to the passed context
      * `mc`.
      */
-    fun abs(mc: kendy.math.MathContext): BigDecimal? {
+    fun abs(mc: kendy.math.MathContext): BigDecimal {
         val result = if (signum() < 0) negate() else BigDecimal(
             unscaledValue, scale
         )
@@ -1926,7 +1930,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      *
      * @return `-this`
      */
-    fun negate(): BigDecimal? {
+    fun negate(): BigDecimal {
         return if (bitLength < 63 || bitLength == 63 && smallValue != Long.MIN_VALUE) {
             valueOf(-smallValue, scale)
         } else BigDecimal(unscaledValue!!.negate(), scale)
@@ -1940,7 +1944,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * rounding mode and precision for the result of this operation.
      * @return `-this`
      */
-    fun negate(mc: kendy.math.MathContext): BigDecimal? {
+    fun negate(mc: kendy.math.MathContext): BigDecimal {
         val result = negate()
         result!!.inplaceRound(mc)
         return result
@@ -2077,9 +2081,9 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * UNNECESSARY` and this cannot be represented within the given
      * precision.
      */
-    fun round(mc: kendy.math.MathContext): BigDecimal {
+    fun round(mc: kendy.math.MathContext?): BigDecimal {
         val thisBD: BigDecimal = BigDecimal(unscaledValue, scale)
-        thisBD.inplaceRound(mc)
+        thisBD.inplaceRound(mc!!)
         return thisBD
     }
 
@@ -2107,7 +2111,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `roundingMode == ROUND_UNNECESSARY` and rounding is
      * necessary according to the given scale.
      */
-    fun setScale(newScale: Int, roundingMode: RoundingMode?): BigDecimal? {
+    fun setScale(newScale: Int, roundingMode: RoundingMode?): BigDecimal {
         if (roundingMode == null) {
             throw NullPointerException("roundingMode == null")
         }
@@ -2262,7 +2266,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * This method has the same effect as [.movePointRight], except that
      * the precision is not changed.
      */
-    fun scaleByPowerOfTen(n: Int): BigDecimal? {
+    fun scaleByPowerOfTen(n: Int): BigDecimal {
         val newScale = scale - n.toLong()
         return if (bitLength < 64) {
             //Taking care when a 0 is to be scaled
@@ -2668,7 +2672,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
          * 10^(-scale). If the scale is positive and very large the long value
          * could be zero.
          */
-        return if (scale <= -64 || scale > approxPrecision()) 0L else toBigInteger().longValue()
+        return if (scale <= -64 || scale > approxPrecision()) 0L else toBigInteger().toLong()
     }
 
     /**
@@ -2694,7 +2698,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
          * 10^(-scale). If the scale is positive and very large the long value
          * could be zero.
          */
-        return if (scale <= -32 || scale > approxPrecision()) 0 else toBigInteger().intValue()
+        return if (scale <= -32 || scale > approxPrecision()) 0 else toBigInteger().toInt()
     }
 
     /**
@@ -2852,7 +2856,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         discardedSize = mantissa.bitLength() - 54
         if (discardedSize > 0) { // (n > 54)
             // mantissa = (abs(u) * 10^s) >> (n - 54)
-            bits = mantissa.shiftRight(discardedSize).longValue()
+            bits = mantissa.shiftRight(discardedSize).toLong()
             tempBits = bits
             // #bits = 54, to check if the discarded fraction produces a carry
             if (bits and 1 == 1L && lowestSetBit < discardedSize
@@ -2862,7 +2866,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             }
         } else { // (n <= 54)
             // mantissa = (abs(u) * 10^s) << (54 - n)
-            bits = mantissa.longValue() shl -discardedSize
+            bits = mantissa.toLong() shl -discardedSize
             tempBits = bits
             // #bits = 54, to check if the discarded fraction produces a carry:
             if (bits and 3 == 3L) {
@@ -3046,7 +3050,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         val bigInteger = toBigIntegerExact()
         if (bigInteger.bitLength() < bitLengthOfType) {
             // It fits in the primitive type
-            return bigInteger.longValue()
+            return bigInteger.toLong()
         }
         throw ArithmeticException("Rounding necessary")
     }
@@ -3074,7 +3078,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         `in`.defaultReadObject()
         bitLength = intVal!!.bitLength()
         if (bitLength < 64) {
-            smallValue = intVal!!.longValue()
+            smallValue = intVal!!.toLong()
         }
     }
     */
@@ -3102,7 +3106,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             intVal = unscaledValue
             bitLength = unscaledValue.bitLength()
             if (bitLength < 64) {
-                smallValue = unscaledValue.longValue()
+                smallValue = unscaledValue.toLong()
             }
         }
 }
