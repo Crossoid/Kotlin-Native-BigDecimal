@@ -16,7 +16,9 @@
  */
 package kendy.math
 
+import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
 import kotlin.math.*
 
@@ -174,16 +176,19 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         /**
          * The constant zero as a `BigDecimal`.
          */
+        @JvmField
         val ZERO: BigDecimal = BigDecimal(0, 0)
 
         /**
          * The constant one as a `BigDecimal`.
          */
+        @JvmField
         val ONE: BigDecimal = BigDecimal(1, 0)
 
         /**
          * The constant ten as a `BigDecimal`.
          */
+        @JvmField
         val TEN: BigDecimal = BigDecimal(10, 0)
         /* Public Methods */
         /**
@@ -208,6 +213,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
          * value to be converted to a `BigDecimal`.
          * @return `BigDecimal` instance with the value `unscaledVal`.
          */
+        @JvmStatic
         fun valueOf(unscaledVal: Long): BigDecimal {
             return if (unscaledVal >= 0 && unscaledVal < BI_SCALED_BY_ZERO_LENGTH) {
                 BI_SCALED_BY_ZERO[unscaledVal.toInt()]!!
@@ -228,6 +234,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
          * @throws NumberFormatException
          * if `val` is infinite or `val` is not a number
          */
+        @JvmStatic
         fun valueOf(`val`: Double): BigDecimal {
             if (`val`.isInfinite() || `val`.isNaN()) {
                 throw NumberFormatException("Infinity or NaN: $`val`")
