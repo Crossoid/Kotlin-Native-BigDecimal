@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "NativeBN"
-
-#include <stdio.h>
+#include <cstdio>
 #include <algorithm>
 #include <memory>
 
@@ -24,12 +22,9 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 
-#include <nativehelper/JNIHelp.h>
-#include <nativehelper/ScopedPrimitiveArray.h>
-#include <nativehelper/ScopedUtfChars.h>
-#include <nativehelper/jni_macros.h>
-
-#include "JniException.h"
+#include <jni.h>
+#include <nativehelper/scoped_utf_chars.h>
+#include <nativehelper/scoped_primitive_array.h>
 
 struct BN_CTX_Deleter {
   void operator()(BN_CTX* p) const {
@@ -40,6 +35,51 @@ typedef std::unique_ptr<BN_CTX, BN_CTX_Deleter> Unique_BN_CTX;
 
 static BIGNUM* toBigNum(jlong address) {
   return reinterpret_cast<BIGNUM*>(static_cast<uintptr_t>(address));
+}
+
+static void DiscardPendingException(JNIEnv* env, const char* className) {
+    jthrowable exception = env->ExceptionOccurred();
+    env->ExceptionClear();
+    if (exception == NULL) {
+        return;
+    }
+
+    //struct ExpandableString summary;
+    //ExpandableStringInitialize(&summary);
+    //GetExceptionSummary(env, exception, &summary);
+    //const char* details = (summary.data != NULL) ? summary.data : "Unknown";
+    //ALOGW("Discarding pending exception (%s) to throw %s", details, className);
+    //ExpandableStringRelease(&summary);
+    env->DeleteLocalRef(exception);
+}
+
+int jniThrowException(JNIEnv* env, const char* className, const char* message) {
+    DiscardPendingException(env, className);
+
+    jclass exceptionClass = env->FindClass(className);
+    if (exceptionClass == NULL) {
+        //ALOGE("Unable to find exception class %s", className);
+        /* ClassNotFoundException now pending */
+        return -1;
+    }
+
+    int status = 0;
+    if (env->ThrowNew(exceptionClass, message) != JNI_OK) {
+        //ALOGE("Failed throwing '%s' '%s'", className, message);
+        /* an exception, most likely OOM, will now be pending */
+        status = -1;
+    }
+    env->DeleteLocalRef(exceptionClass);
+
+    return status;
+}
+
+void jniThrowOutOfMemoryError(JNIEnv* env, const char* message) {
+    jniThrowException(env, "java/lang/OutOfMemoryError", message);
+}
+
+int jniThrowNullPointerException(JNIEnv* env, const char* msg) {
+    return jniThrowException(env, "java/lang/NullPointerException", msg);
 }
 
 static void throwException(JNIEnv* env) {
