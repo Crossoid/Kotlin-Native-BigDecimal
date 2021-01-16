@@ -127,4 +127,9 @@ internal object NativeBN {
     // Returns *is_probably_prime on success and throws an exception on error.
     // &BN_free
     external fun getNativeFinalizer(): Long
+
+    init {
+        // Load the appropriate implementation from libnativebn.so
+        System.loadLibrary("nativebn")
+    }
 }
