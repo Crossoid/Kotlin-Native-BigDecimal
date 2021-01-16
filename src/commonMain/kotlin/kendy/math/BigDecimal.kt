@@ -451,7 +451,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
          * @see .scale
          */
         private fun zeroScaledBy(longScale: Long): BigDecimal {
-            if (longScale == (longScale as Int).toLong()){
+            if (longScale == (longScale.toInt()).toLong()){
                 return valueOf(0, longScale.toInt())
             }
             return if (longScale >= 0) {
@@ -2136,7 +2136,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             } else BigDecimal(
                 kendy.math.Multiplication.multiplyByTenPow(
                     unscaledValue,
-                    (diffScale as Int).toLong()
+                    diffScale
                 ), newScale
             )
         }
