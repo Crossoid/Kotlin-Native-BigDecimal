@@ -1871,7 +1871,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         // The ANSI standard X3.274-1996 algorithm
         val m: Int = abs(n)
         val mcPrecision: Int = mc.precision
-        val elength = log10(m.toDouble()) as Int + 1 // decimal digits in 'n'
+        val elength = log10(m.toDouble()).toInt() + 1 // decimal digits in 'n'
         var oneBitMask: Int // mask of bits
         var accum: BigDecimal? // the single accumulator
         var newPrecision: kendy.math.MathContext = mc // MathContext by default
