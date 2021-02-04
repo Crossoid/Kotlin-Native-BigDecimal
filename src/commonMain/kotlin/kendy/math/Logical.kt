@@ -16,6 +16,9 @@
  */
 package kendy.math
 
+import kotlin.math.max
+import kotlin.math.min
+
 /**
  * The library implements some logical operations over `BigInteger`. The
  * operations provided are listed below.
@@ -110,8 +113,8 @@ internal object Logical {
      */
     fun andPositive(`val`: BigInteger, that: BigInteger): BigInteger {
         // PRE: both arguments are positive
-        val resLength: Int = java.lang.Math.min(`val`.numberLength, that.numberLength)
-        var i: Int = java.lang.Math.max(`val`.firstNonzeroDigit, that.firstNonzeroDigit)
+        val resLength: Int = min(`val`.numberLength, that.numberLength)
+        var i: Int = max(`val`.firstNonzeroDigit, that.firstNonzeroDigit)
         if (i >= resLength) {
             return BigInteger.ZERO
         }
@@ -139,12 +142,12 @@ internal object Logical {
         val resDigits = IntArray(resLength)
 
         // Must start from max(iPos, iNeg)
-        var i: Int = java.lang.Math.max(iPos, iNeg)
+        var i: Int = max(iPos, iNeg)
         if (i == iNeg) {
             resDigits[i] = -negative.digits[i] and positive.digits[i]
             i++
         }
-        val limit: Int = java.lang.Math.min(negative.numberLength, positive.numberLength)
+        val limit: Int = min(negative.numberLength, positive.numberLength)
         while (i < limit) {
             resDigits[i] = negative.digits[i].inv() and positive.digits[i]
             i++
@@ -174,7 +177,7 @@ internal object Logical {
         }
         val resLength: Int
         val resDigits: IntArray
-        var i: Int = java.lang.Math.max(iShorter, iLonger)
+        var i: Int = max(iShorter, iLonger)
         var digit: Int
         digit = if (iShorter > iLonger) {
             -shorter.digits[i] and longer.digits[i].inv()
@@ -259,7 +262,7 @@ internal object Logical {
     fun andNotPositive(`val`: BigInteger, that: BigInteger): BigInteger {
         // PRE: both arguments are positive
         val resDigits = IntArray(`val`.numberLength)
-        val limit: Int = java.lang.Math.min(`val`.numberLength, that.numberLength)
+        val limit: Int = min(`val`.numberLength, that.numberLength)
         var i: Int
         i = `val`.firstNonzeroDigit
         while (i < limit) {
@@ -282,7 +285,7 @@ internal object Logical {
         if (iNeg >= positive.numberLength) {
             return positive
         }
-        val resLength: Int = java.lang.Math.min(positive.numberLength, negative.numberLength)
+        val resLength: Int = min(positive.numberLength, negative.numberLength)
         val resDigits = IntArray(resLength)
 
         // Always start from first non zero of positive
@@ -319,11 +322,11 @@ internal object Logical {
         if (iNeg >= positive.numberLength) {
             return negative
         }
-        resLength = java.lang.Math.max(negative.numberLength, positive.numberLength)
+        resLength = max(negative.numberLength, positive.numberLength)
         var i = iNeg
         if (iPos > iNeg) {
             resDigits = IntArray(resLength)
-            limit = java.lang.Math.min(negative.numberLength, iPos)
+            limit = min(negative.numberLength, iPos)
             while (i < limit) {
 
                 // 1st case:  resDigits [i] = -(-negative.digits[i] & (~0))
@@ -343,7 +346,7 @@ internal object Logical {
         } else {
             digit = -negative.digits[i] and positive.digits[i].inv()
             if (digit == 0) {
-                limit = java.lang.Math.min(positive.numberLength, negative.numberLength)
+                limit = min(positive.numberLength, negative.numberLength)
                 i++
                 while (i < limit && (negative.digits[i] or positive.digits[i]).inv()
                         .also { digit = it } == 0
@@ -377,7 +380,7 @@ internal object Logical {
             resDigits[i] = -digit
             i++
         }
-        limit = java.lang.Math.min(positive.numberLength, negative.numberLength)
+        limit = min(positive.numberLength, negative.numberLength)
         while (i < limit) {
 
             //resDigits[i] = ~(~negative.digits[i] & ~positive.digits[i]);
@@ -412,7 +415,7 @@ internal object Logical {
         if (iVal < iThat) {
             // resDigits[i] = -val.digits[i] & -1;
             resDigits[i] = -`val`.digits[i]
-            limit = java.lang.Math.min(`val`.numberLength, iThat)
+            limit = min(`val`.numberLength, iThat)
             i++
             while (i < limit) {
 
@@ -440,7 +443,7 @@ internal object Logical {
             // resDigits[i] = -val.digits[i] & ~-that.digits[i];
             resDigits[i] = -`val`.digits[i] and that.digits[i] - 1
         }
-        limit = java.lang.Math.min(`val`.numberLength, that.numberLength)
+        limit = min(`val`.numberLength, that.numberLength)
         i++
         while (i < limit) {
 
@@ -523,7 +526,7 @@ internal object Logical {
         } else if (iThat >= `val`.numberLength) {
             return `val`
         }
-        val resLength: Int = java.lang.Math.min(`val`.numberLength, that.numberLength)
+        val resLength: Int = min(`val`.numberLength, that.numberLength)
         val resDigits = IntArray(resLength)
 
         //Looking for the first non-zero digit of the result
@@ -573,7 +576,7 @@ internal object Logical {
         } else if (iPos < iNeg) {
             i = iPos
             resDigits[i] = -positive.digits[i]
-            limit = java.lang.Math.min(positive.numberLength, iNeg)
+            limit = min(positive.numberLength, iNeg)
             i++
             while (i < limit) {
                 resDigits[i] = positive.digits[i].inv()
@@ -596,7 +599,7 @@ internal object Logical {
             resDigits[i] = -(-negative.digits[i] or positive.digits[i])
             i++
         }
-        limit = java.lang.Math.min(negative.numberLength, positive.numberLength)
+        limit = min(negative.numberLength, positive.numberLength)
         while (i < limit) {
 
             // Applying two complement to negative and to result
@@ -654,7 +657,7 @@ internal object Logical {
         // PRE: longer has at least as many digits as shorter
         val resLength = longer.numberLength
         val resDigits = IntArray(resLength)
-        var i: Int = java.lang.Math.min(longer.firstNonzeroDigit, shorter.firstNonzeroDigit)
+        var i: Int = min(longer.firstNonzeroDigit, shorter.firstNonzeroDigit)
         while (i < shorter.numberLength) {
             resDigits[i] = longer.digits[i] xor shorter.digits[i]
             i++
@@ -671,7 +674,7 @@ internal object Logical {
     fun xorNegative(`val`: BigInteger, that: BigInteger): BigInteger {
         // PRE: val and that are negative
         // PRE: val has at least as many trailing zero digits as that
-        val resLength: Int = java.lang.Math.max(`val`.numberLength, that.numberLength)
+        val resLength: Int = max(`val`.numberLength, that.numberLength)
         val resDigits = IntArray(resLength)
         val iVal = `val`.firstNonzeroDigit
         val iThat = that.firstNonzeroDigit
@@ -681,7 +684,7 @@ internal object Logical {
             resDigits[i] = -`val`.digits[i] xor -that.digits[i]
         } else {
             resDigits[i] = -that.digits[i]
-            limit = java.lang.Math.min(that.numberLength, iVal)
+            limit = min(that.numberLength, iVal)
             i++
             while (i < limit) {
                 resDigits[i] = that.digits[i].inv()
@@ -702,7 +705,7 @@ internal object Logical {
                 resDigits[i] = -`val`.digits[i] xor that.digits[i].inv()
             }
         }
-        limit = java.lang.Math.min(`val`.numberLength, that.numberLength)
+        limit = min(`val`.numberLength, that.numberLength)
         //Perform ^ between that al val until that ends
         i++
         while (i < limit) {
@@ -730,7 +733,7 @@ internal object Logical {
     /** @return sign = 1, magnitude = -(positive.magnitude ^ -negative.magnitude)
      */
     fun xorDiffSigns(positive: BigInteger, negative: BigInteger): BigInteger {
-        var resLength: Int = java.lang.Math.max(negative.numberLength, positive.numberLength)
+        var resLength: Int = max(negative.numberLength, positive.numberLength)
         val resDigits: IntArray
         val iNeg = negative.firstNonzeroDigit
         val iPos = positive.firstNonzeroDigit
@@ -743,7 +746,7 @@ internal object Logical {
             i = iNeg
             //resDigits[i] = -(-negative.digits[i]);
             resDigits[i] = negative.digits[i]
-            limit = java.lang.Math.min(negative.numberLength, iPos)
+            limit = min(negative.numberLength, iPos)
             //Skip the positive digits while they are zeros
             i++
             while (i < limit) {
@@ -767,7 +770,7 @@ internal object Logical {
             i = iPos
             //Applying two complement to the first non-zero digit of the result
             resDigits[i] = -positive.digits[i]
-            limit = java.lang.Math.min(positive.numberLength, iNeg)
+            limit = min(positive.numberLength, iNeg)
             i++
             while (i < limit) {
 
@@ -801,7 +804,7 @@ internal object Logical {
             i = iNeg
             var digit = positive.digits[i] xor -negative.digits[i]
             if (digit == 0) {
-                limit = java.lang.Math.min(positive.numberLength, negative.numberLength)
+                limit = min(positive.numberLength, negative.numberLength)
                 i++
                 while (i < limit && positive.digits[i] xor negative.digits[i].inv()
                         .also { digit = it } == 0
@@ -832,7 +835,7 @@ internal object Logical {
             resDigits[i] = -digit
             i++
         }
-        limit = java.lang.Math.min(negative.numberLength, positive.numberLength)
+        limit = min(negative.numberLength, positive.numberLength)
         while (i < limit) {
             resDigits[i] = (negative.digits[i].inv() xor positive.digits[i]).inv()
             i++
