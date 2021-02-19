@@ -20,42 +20,97 @@ import boringssl.BIGNUM
 import kotlinx.cinterop.*
 
 internal actual object NativeBN {
+    /**
+     * Just throw if the BIGNUM handle is not correct.
+     */
     private fun checkValid(a: Long) {
         if (a == 0L)
-            throw NullPointerException("1st BIGNUM not valid")
+            throw NullPointerException("BIGNUM not valid")
     }
 
-    fun BN_new(): Long {
-        val bignum = boringssl.BN_new()?.toLong() ?: 0
+    /**
+     * Throw if the BIGNUM handle is not correct.
+     */
+    private fun checkValid(bn: CPointer<BIGNUM>?) {
+        toLong(bn) // it performs the check
+    }
 
-        checkValid(bignum)
-        return bignum
+    /**
+     * Convert the Long to the C representation of BIGNUM.
+     */
+    private fun toBigNum(a: Long): CPointer<BIGNUM>? {
+        checkValid(a)
+        return a.toCPointer<BIGNUM>()
+    }
+
+    /**
+     * Convert the BIGNUM C representation to Long.
+     */
+    private fun toLong(bn: CPointer<BIGNUM>?): Long {
+        val bnLong = bn?.toLong() ?: 0
+        checkValid(bnLong)
+        return bnLong
     }
 
     // BIGNUM *BN_new(void);
-    fun BN_free(a: Long) {
-        checkValid(a)
-        boringssl.BN_free(a.toCPointer<BIGNUM>())
+    fun BN_new(): Long {
+        return toLong(boringssl.BN_new())
     }
 
     // void BN_free(BIGNUM *a);
-    external fun BN_cmp(a: Long, b: Long): Int
+    fun BN_free(a: Long) {
+        boringssl.BN_free(toBigNum(a))
+    }
 
     // int BN_cmp(const BIGNUM *a, const BIGNUM *b);
-    external fun BN_copy(to: Long, from: Long)
+    fun BN_cmp(a: Long, b: Long): Int {
+        return boringssl.BN_cmp(toBigNum(a), toBigNum(b));
+    }
 
     // BIGNUM *BN_copy(BIGNUM *to, const BIGNUM *from);
-    external fun putLongInt(a: Long, dw: Long)
-    external fun putULongInt(a: Long, dw: Long, neg: Boolean)
-    external fun BN_dec2bn(a: Long, str: String?): Int
+    fun BN_copy(to: Long, from: Long) {
+        checkValid(boringssl.BN_copy(toBigNum(to), toBigNum(from)))
+    }
+
+    fun putLongInt(a: Long, dw: Long) {
+        if (dw >= 0) {
+            putULongInt(a, dw, false);
+        } else {
+            putULongInt(a, -dw, true);
+        }
+    }
+
+    fun putULongInt(a: Long, dw: Long, neg: Boolean) {
+        val bnA = toBigNum(a)
+        if (boringssl.BN_set_u64(bnA, dw.toULong()) == 0) {
+            throw ArithmeticException("BN_set_u64 failed")
+            return
+        }
+
+        boringssl.BN_set_negative(bnA, (if (neg) 1 else 0));
+    }
 
     // int BN_dec2bn(BIGNUM **a, const char *str);
-    external fun BN_hex2bn(a: Long, str: String?): Int
+    fun BN_dec2bn(a: Long, str: String?): Int {
+        val result = boringssl.BN_dec2bn(cValuesOf(toBigNum(a)), str);
+        if (result == 0) {
+            throw ArithmeticException("BN_dec2bn failed")
+        }
+        return result;
+    }
 
     // int BN_hex2bn(BIGNUM **a, const char *str);
-    external fun BN_bin2bn(s: ByteArray?, len: Int, neg: Boolean, ret: Long)
+    fun BN_hex2bn(a: Long, str: String?): Int {
+        val result = boringssl.BN_hex2bn(cValuesOf(toBigNum(a)), str);
+        if (result == 0) {
+            throw ArithmeticException("BN_hex2bn failed")
+        }
+        return result;
+    }
 
     // BIGNUM * BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
+    external fun BN_bin2bn(s: ByteArray?, len: Int, neg: Boolean, ret: Long)
+
     // BN-Docu: s is taken as unsigned big endian;
     // Additional parameter: neg.
     external fun litEndInts2bn(ints: IntArray?, len: Int, neg: Boolean, ret: Long)
