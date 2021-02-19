@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2021 Jan Holešovský
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +16,27 @@
  */
 package kendy.math
 
+import boringssl.BIGNUM
 import kotlinx.cinterop.*
-import boringssl.*
 
 internal actual object NativeBN {
-    external fun BN_new(): Long
+    private fun checkValid(a: Long) {
+        if (a == 0L)
+            throw NullPointerException("1st BIGNUM not valid")
+    }
+
+    fun BN_new(): Long {
+        val bignum = boringssl.BN_new()?.toLong() ?: 0
+
+        checkValid(bignum)
+        return bignum
+    }
 
     // BIGNUM *BN_new(void);
-    external fun BN_free(a: Long)
+    fun BN_free(a: Long) {
+        checkValid(a)
+        boringssl.BN_free(a.toCPointer<BIGNUM>())
+    }
 
     // void BN_free(BIGNUM *a);
     external fun BN_cmp(a: Long, b: Long): Int
@@ -131,8 +145,8 @@ internal actual object NativeBN {
     // &BN_free
     external fun getNativeFinalizer(): Long
 
-    init {
+    /*init {
         // Load the appropriate implementation from libnativebn.so
         System.loadLibrary("nativebn")
-    }
+    }*/
 }
