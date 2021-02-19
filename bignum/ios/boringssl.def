@@ -1,0 +1,5 @@
+headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
+compilerOpts = -I/Volumes/Projects/BigDecimal/bignum/ios/boringssl/include
+staticLibraries = libcrypto.a libssl.a
+libraryPaths = /Volumes/Projects/BigDecimal/bignum/ios/boringssl/build-x86_64/crypto /Volumes/Projects/BigDecimal/bignum/ios/boringssl/build-x86_64/ssl
+package = boringssl

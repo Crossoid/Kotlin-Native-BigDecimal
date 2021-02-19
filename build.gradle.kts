@@ -21,6 +21,31 @@ kotlin {
                 baseName = "library"
             }
         }
+        // Build a native interop from the boringssl library; details here:
+        // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
+        // The boringssl provides the BIGNUM implementation
+        compilations["main"].cinterops {
+            compilations["main"].cinterops {
+                val boringssl by creating {
+                    // Def-file describing the native API.
+                    // The default path is src/nativeInterop/cinterop/<interop-name>.def
+                    // TODO find a way to not hardcode the path...
+                    defFile(project.file("/Volumes/Projects/BigDecimal/bignum/ios/boringssl.def"))
+
+                    // Package to place the Kotlin API generated.
+                    packageName("boringssl")
+
+                    // Options to be passed to compiler by cinterop tool.
+                    //compilerOpts("-Ipath/to/headers")
+
+                    // Directories for header search (an analogue of the -I<path> compiler option).
+                    //includeDirs.allHeaders("path1", "path2")
+
+                    // A shortcut for includeDirs.allHeaders.
+                    //includeDirs("include/directory", "another/directory")
+                }
+            }
+        }
     }
     sourceSets {
         val commonMain by getting

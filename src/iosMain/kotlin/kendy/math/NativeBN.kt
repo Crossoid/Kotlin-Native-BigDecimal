@@ -15,6 +15,9 @@
  */
 package kendy.math
 
+import kotlinx.cinterop.*
+import boringssl.*
+
 internal actual object NativeBN {
     external fun BN_new(): Long
 
