@@ -1,0 +1,6 @@
+headers = openssl/ssl.h openssl/crypto.h
+#headerFilter = ssl.h
+compilerOpts = -I./boringssl/include
+staticLibraries = libcrypto.a libssl.a
+libraryPaths = ./boringssl/build-x86_64/crypto ./boringssl/build-x86_64/ssl
+package = ssl

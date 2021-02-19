@@ -1,18 +1,18 @@
 To build the 'nativebn' lib to try the Kendy's BigDecimal port:
 
-Pre-requirements:
+= Pre-requirements =
 
 * cmake
 * go lang
 
-Build BoringSSL:
+= Build BoringSSL =
 
 git clone git@github.com:google/boringssl.git
 cd boringssl
 mkdir build
 cd build
 
-Configure & build BoringSSL:
+= Configure & build BoringSSL =
 
 * For JNI:
 
@@ -28,16 +28,26 @@ Configure & build BoringSSL:
 
   /Volumes/cmake-3.18.6-Darwin-x86_64/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
 
-Build nativebn:
+= Build nativebn - JNI =
 
 git clone https://android.googlesource.com/platform/libnativehelper
 git clone https://android.googlesource.com/platform/libcore
-
 
 # adapt the A path to the dir where the libcore & libnative helper is
 # checked out, and run:
 ./build-nativebn.sh
 
-Install:
+== Install ==
 
 sudo cp libnativebn.so /usr/lib64/
+
+= Build native part - K/N =
+
+# https://kotlinlang.org/docs/native-libraries.html#library-search-sequence
+# https://github.com/JetBrains/kotlin-native/issues/2314
+
+~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/cinterop -def ssl.def -o ssl
+
+== Install ==
+
+~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/klib install ssl.klib
