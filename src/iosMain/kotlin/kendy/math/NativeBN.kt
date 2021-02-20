@@ -19,6 +19,10 @@ package kendy.math
 import boringssl.BIGNUM
 import kotlinx.cinterop.*
 
+/**
+ * Binding between the Kotlin BigDecimal and boringssl's BIGNUM.
+ * https://kotlinlang.org/docs/native-c-interop.html
+ */
 internal actual object NativeBN {
     /**
      * Just throw if the BIGNUM handle is not correct.
@@ -51,6 +55,11 @@ internal actual object NativeBN {
         checkValid(bnLong)
         return bnLong
     }
+
+    /**
+     * Convenience function to convert Boolean to Int.
+     */
+    private fun Boolean.toInt(): Int = if (this) 1 else 0
 
     // BIGNUM *BN_new(void);
     fun BN_new(): Long {
@@ -87,7 +96,7 @@ internal actual object NativeBN {
             return
         }
 
-        boringssl.BN_set_negative(bnA, (if (neg) 1 else 0));
+        boringssl.BN_set_negative(bnA, neg.toInt());
     }
 
     // int BN_dec2bn(BIGNUM **a, const char *str);
@@ -109,11 +118,30 @@ internal actual object NativeBN {
     }
 
     // BIGNUM * BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
-    external fun BN_bin2bn(s: ByteArray?, len: Int, neg: Boolean, ret: Long)
-
     // BN-Docu: s is taken as unsigned big endian;
     // Additional parameter: neg.
-    external fun litEndInts2bn(ints: IntArray?, len: Int, neg: Boolean, ret: Long)
+    fun BN_bin2bn(s: ByteArray?, len: Int, neg: Boolean, ret: Long) {
+        val retBN = toBigNum(ret)
+        // "pin" the ByteArray to fix it in memory at a given place
+        s?.usePinned { pinned ->
+            checkValid(boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.toULong(), retBN))
+        }
+
+        boringssl.BN_set_negative(retBN, neg.toInt());
+    }
+
+    fun litEndInts2bn(ints: IntArray?, len: Int, neg: Boolean, ret: Long) {
+        // TODO assert(ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
+
+        val retBN = toBigNum(ret);
+        // "pin" the IntArray to fix it in memory at a given place
+        ints?.usePinned { pinned ->
+            checkValid(boringssl.BN_le2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.toULong() * 4UL /* sizeof Int */, retBN))
+        }
+
+        boringssl.BN_set_negative(retBN, neg.toInt());
+    }
+
     external fun twosComp2bn(s: ByteArray?, len: Int, ret: Long)
     external fun longInt(a: Long): Long
 
