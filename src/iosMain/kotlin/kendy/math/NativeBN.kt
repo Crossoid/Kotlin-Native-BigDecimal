@@ -157,79 +157,224 @@ internal actual object NativeBN {
     // Returns result byte[] AND NOT length.
     // int BN_bn2bin(const BIGNUM *a, unsigned char *to);
     external fun bn2litEndInts(a: Long): IntArray?
-    external fun sign(a: Long): Int
 
     // Returns -1, 0, 1 AND NOT boolean.
     // #define BN_is_negative(a) ((a)->neg != 0)
-    external fun BN_set_negative(b: Long, n: Int)
+    fun sign(a: Long): Int {
+        checkValid(a)
+
+        val aBN = toBigNum(a)
+        if (boringssl.BN_is_zero(aBN) != 0) {
+            return 0;
+        } else if (boringssl.BN_is_negative(aBN) != 0) {
+            return -1;
+        }
+        return 1;
+    }
 
     // void BN_set_negative(BIGNUM *b, int n);
+    fun BN_set_negative(b: Long, n: Int) {
+        checkValid(b)
+        boringssl.BN_set_negative(toBigNum(b), n);
+    }
+
     external fun bitLength(a: Long): Int
-    external fun BN_is_bit_set(a: Long, n: Int): Boolean
 
     // int BN_is_bit_set(const BIGNUM *a, int n);
-    external fun BN_shift(r: Long, a: Long, n: Int)
+    fun BN_is_bit_set(a: Long, n: Int): Boolean {
+        checkValid(a)
+
+        // NOTE: this is only called in the positive case, so BN_is_bit_set is fine here.
+        if (boringssl.BN_is_bit_set(toBigNum(a), n) != 0)
+            return true
+
+        return false
+    }
 
     // int BN_shift(BIGNUM *r, const BIGNUM *a, int n);
-    external fun BN_add_word(a: Long, w: Int)
+    fun BN_shift(r: Long, a: Long, n: Int) {
+        checkValid(r)
+        checkValid(a)
+
+        var ok: Int
+        if (n >= 0) {
+            ok = boringssl.BN_lshift(toBigNum(r), toBigNum(a), n);
+        } else {
+            ok = boringssl.BN_rshift(toBigNum(r), toBigNum(a), -n);
+        }
+
+        if (ok == 0)
+            throw ArithmeticException("BN_shift failed")
+    }
 
     // ATTENTION: w is treated as unsigned.
     // int BN_add_word(BIGNUM *a, BN_ULONG w);
-    external fun BN_mul_word(a: Long, w: Int)
+    fun BN_add_word(a: Long, w: Int) {
+        checkValid(a)
+
+        if (boringssl.BN_add_word(toBigNum(a), w.toULong()) == 0) {
+            throw ArithmeticException("BN_add_word failed")
+        }
+    }
 
     // ATTENTION: w is treated as unsigned.
     // int BN_mul_word(BIGNUM *a, BN_ULONG w);
-    external fun BN_mod_word(a: Long, w: Int): Int
+    fun BN_mul_word(a: Long, w: Int) {
+        checkValid(a)
+
+        if (boringssl.BN_mul_word(toBigNum(a), w.toULong()) == 0) {
+            throw ArithmeticException("BN_mul_word failed")
+        }
+    }
 
     // ATTENTION: w is treated as unsigned.
     // BN_ULONG BN_mod_word(BIGNUM *a, BN_ULONG w);
-    external fun BN_add(r: Long, a: Long, b: Long)
+    fun BN_mod_word(a: Long, w: Int): Int {
+        checkValid(a)
+
+        val result = boringssl.BN_mod_word(toBigNum(a), w.toULong());
+        if (result == (-1).toULong()) {
+            throw ArithmeticException("BN_mod_word failed")
+        }
+        return result.toInt();
+    }
 
     // int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
-    external fun BN_sub(r: Long, a: Long, b: Long)
+    fun BN_add(r: Long, a: Long, b: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(b)
+
+        if (boringssl.BN_add(toBigNum(r), toBigNum(a), toBigNum(b)) == 0) {
+            throw ArithmeticException("BN_add failed")
+        }
+    }
 
     // int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
-    external fun BN_gcd(r: Long, a: Long, b: Long)
+    fun BN_sub(r: Long, a: Long, b: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(b)
+
+        if (boringssl.BN_sub(toBigNum(r), toBigNum(a), toBigNum(b)) == 0) {
+            throw ArithmeticException("BN_sub failed")
+        }
+    }
 
     // int BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-    external fun BN_mul(r: Long, a: Long, b: Long)
+    fun BN_gcd(r: Long, a: Long, b: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(b)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_gcd(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
+            throw ArithmeticException("BN_gcd failed")
+        }
+    }
 
     // int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-    external fun BN_exp(r: Long, a: Long, p: Long)
+    fun BN_mul(r: Long, a: Long, b: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(b)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_mul(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
+            throw ArithmeticException("BN_mul failed")
+        }
+    }
 
     // int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-    external fun BN_div(dv: Long, rem: Long, m: Long, d: Long)
+    fun BN_exp(r: Long, a: Long, p: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(p)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_exp(toBigNum(r), toBigNum(a), toBigNum(p), ctx) == 0) {
+            throw ArithmeticException("BN_exp failed")
+        }
+    }
 
     // int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
-    external fun BN_nnmod(r: Long, a: Long, m: Long)
+    fun BN_div(dv: Long, rem: Long, m: Long, d: Long) {
+        checkValid(if (rem != 0L) rem else dv)
+        checkValid(if (dv != 0L) dv else rem)
+        checkValid(m)
+        checkValid(d)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
+            throw ArithmeticException("BN_div failed")
+        }
+    }
 
     // int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
-    external fun BN_mod_exp(r: Long, a: Long, p: Long, m: Long)
+    fun BN_nnmod(r: Long, a: Long, m: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(m)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_nnmod(toBigNum(r), toBigNum(a), toBigNum(m), ctx) == 0) {
+            throw ArithmeticException("BN_nnmod failed")
+        }
+    }
 
     // int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx);
-    external fun BN_mod_inverse(ret: Long, a: Long, n: Long)
+    fun BN_mod_exp(r: Long, a: Long, p: Long, m: Long) {
+        checkValid(r)
+        checkValid(a)
+        checkValid(p)
+        checkValid(m)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_mod_exp(toBigNum(r), toBigNum(a), toBigNum(p), toBigNum(m), ctx) == 0) {
+            throw ArithmeticException("BN_mod_exp failed")
+        }
+    }
 
     // BIGNUM * BN_mod_inverse(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
-    external fun BN_generate_prime_ex(
-        ret: Long, bits: Int, safe: Boolean,
-        add: Long, rem: Long
-    )
+    fun BN_mod_inverse(ret: Long, a: Long, n: Long) {
+        checkValid(ret)
+        checkValid(a)
+        checkValid(n)
+
+        val ctx = boringssl.BN_CTX_new()
+        if (boringssl.BN_mod_inverse(toBigNum(ret), toBigNum(a), toBigNum(n), ctx) == null) {
+            throw ArithmeticException("BN_mod_inverse failed")
+        }
+    }
 
     // int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     //         const BIGNUM *add, const BIGNUM *rem, BN_GENCB *cb);
-    external fun BN_primality_test(
-        candidate: Long, checks: Int,
-        do_trial_division: Boolean
-    ): Boolean
+    fun BN_generate_prime_ex(ret: Long, bits: Int, safe: Boolean, add: Long, rem: Long) {
+        checkValid(ret)
+
+        if (boringssl.BN_generate_prime_ex(toBigNum(ret), bits, safe.toInt(), toBigNum(add), toBigNum(rem), null) == 0) {
+            throw ArithmeticException("BN_generate_prime_ex failed")
+        }
+    }
 
     // int BN_primality_test(int *is_probably_prime, const BIGNUM *candidate, int checks,
     //                       BN_CTX *ctx, int do_trial_division, BN_GENCB *cb);
     // Returns *is_probably_prime on success and throws an exception on error.
+    fun BN_primality_test(candidate: Long, checks: Int, do_trial_division: Boolean): Boolean {
+        checkValid(candidate)
+
+        val ctx = boringssl.BN_CTX_new()
+        var is_probably_prime: Int = 0
+        if (boringssl.BN_primality_test(cValuesOf(is_probably_prime), toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
+            throw ArithmeticException("BN_primality_test failed")
+        }
+
+        if (is_probably_prime != 0)
+            return true
+
+        return false
+    }
+
     // &BN_free
     external fun getNativeFinalizer(): Long
-
-    /*init {
-        // Load the appropriate implementation from libnativebn.so
-        System.loadLibrary("nativebn")
-    }*/
 }
