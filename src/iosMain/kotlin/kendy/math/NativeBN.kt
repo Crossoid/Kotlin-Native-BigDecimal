@@ -142,7 +142,45 @@ internal actual object NativeBN {
         boringssl.BN_set_negative(retBN, neg.toInt());
     }
 
-    external fun twosComp2bn(s: ByteArray?, len: Int, ret: Long)
+    fun twosComp2bn(bytes: ByteArray?, bytesLen: Int, ret: Long) {
+        checkValid(ret)
+
+        val retBN = toBigNum(ret);
+
+        if (bytes == null) {
+            return;
+        }
+
+        if (bytesLen == 0) {
+            boringssl.BN_zero(retBN);
+            return;
+        }
+
+        // "pin" to fix it in memory at a given place
+        bytes?.usePinned { pinned ->
+            if (boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), bytesLen.toULong(), retBN) == null) {
+                throw ArithmeticException("BN_bin2bn failed")
+                return;
+            }
+        }
+
+        // Use the high bit to determine the sign in twos-complement.
+        boringssl.BN_set_negative(retBN, ((bytes[0].toInt() and 0x80) != 0).toInt());
+
+        if (boringssl.BN_is_negative(retBN) != 0) {
+            // For negative values, BN_bin2bn doesn't interpret the twos-complement
+            // representation, so ret is now (- value - 2^N). We can use nnmod_pow2 to set
+            // ret to (-value).
+            if (boringssl.BN_nnmod_pow2(retBN, retBN, bytesLen.toULong() * 8U) == 0) {
+                throw ArithmeticException("BN_nnmod_pow2 failed")
+                return;
+            }
+
+            // And now we correct the sign.
+            boringssl.BN_set_negative(retBN, 1);
+        }
+    }
+
     external fun longInt(a: Long): Long
 
     // unsigned long BN_get_word(BIGNUM *a);
