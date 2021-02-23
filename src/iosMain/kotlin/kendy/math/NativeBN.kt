@@ -181,20 +181,110 @@ internal actual object NativeBN {
         }
     }
 
-    external fun longInt(a: Long): Long
+    fun longInt(a: Long): Long {
+        checkValid(a)
 
-    // unsigned long BN_get_word(BIGNUM *a);
-    external fun BN_bn2dec(a: Long): String?
+        val aBN = toBigNum(a)
+        var word: ULong = 0UL
+
+        if (boringssl.BN_get_u64(aBN, cValuesOf(word)) != 0) {
+            if (boringssl.BN_is_negative(aBN) != 0)
+                return -(word.toLong())
+            else
+                return word.toLong()
+        } else {
+            // This should be unreachable if our caller checks BigInt::twosCompFitsIntoBytes(8)
+            throw ArithmeticException("BN_get_u64 failed")
+            return 0;
+        }
+    }
+
+    /**
+     * Convert the c-string to Kotlin String and trim leading zeros.
+     */
+    private fun leadingZerosTrimmed(str: CPointer<ByteVar>): String {
+        val s = str.toKString()
+        val minus = (s[0] == '-')
+        var i = if (minus) 1 else 0
+
+        while (i < s.length && s[i] == '0') {
+            ++i
+        }
+
+        if (i == s.length)
+            return "0"
+        else if ((i == 0) || (minus && i == 1))
+            return s
+        else if (minus)
+            return '-' + s.substring(i)
+        else
+            return s.substring(i)
+    }
 
     // char * BN_bn2dec(const BIGNUM *a);
-    external fun BN_bn2hex(a: Long): String?
+    fun BN_bn2dec(a: Long): String? {
+        checkValid(a)
+
+        val tmpStr = boringssl.BN_bn2dec(toBigNum(a));
+        if (tmpStr == null) {
+            throw ArithmeticException("BN_bn2dec failed")
+            return null
+        }
+        return leadingZerosTrimmed(tmpStr)
+    }
 
     // char * BN_bn2hex(const BIGNUM *a);
-    external fun BN_bn2bin(a: Long): ByteArray?
+    fun BN_bn2hex(a: Long): String? {
+        checkValid(a)
+
+        val tmpStr = boringssl.BN_bn2hex(toBigNum(a));
+        if (tmpStr == null) {
+            throw ArithmeticException("BN_bn2hex failed")
+            return null
+        }
+        return leadingZerosTrimmed(tmpStr)
+    }
 
     // Returns result byte[] AND NOT length.
     // int BN_bn2bin(const BIGNUM *a, unsigned char *to);
-    external fun bn2litEndInts(a: Long): IntArray?
+    fun BN_bn2bin(a: Long): ByteArray? {
+        checkValid(a)
+
+        val aBN = toBigNum(a);
+        val len = boringssl.BN_num_bytes(aBN)
+        var result = ByteArray(len.toInt())
+
+        // "pin" to fix it in memory at a given place
+        result?.usePinned { pinned ->
+            boringssl.BN_bn2bin(aBN, pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>());
+        }
+
+        return result;
+    }
+
+    fun bn2litEndInts(a: Long): IntArray? {
+        checkValid(a)
+
+        val aBN = toBigNum(a);
+
+        // The number of integers we need is BN_num_bytes(a) / sizeof(int), rounded up
+        val intSize = 4
+        val intLen = (boringssl.BN_num_bytes(aBN).toInt() + intSize - 1) / intSize;
+
+        // Allocate our result with the JNI boilerplate
+        var result = IntArray(intLen);
+
+        // "pin" to fix it in memory at a given place
+        result?.usePinned { pinned ->
+            // We can simply interpret a little-endian byte stream as a little-endian integer stream.
+            if (boringssl.BN_bn2le_padded(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), (intLen * intSize).toULong(), aBN) == 0) {
+                throw ArithmeticException("BN_bn2le_padded failed")
+                return null
+            }
+        }
+
+        return result;
+    }
 
     // Returns -1, 0, 1 AND NOT boolean.
     // #define BN_is_negative(a) ((a)->neg != 0)
@@ -216,7 +306,32 @@ internal actual object NativeBN {
         boringssl.BN_set_negative(toBigNum(b), n);
     }
 
-    external fun bitLength(a: Long): Int
+    fun bitLength(a: Long): Int {
+        checkValid(a)
+
+        val aBN = toBigNum(a);
+
+        // If a is not negative, we can use BN_num_bits directly.
+        if (boringssl.BN_is_negative(aBN) == 0) {
+            return boringssl.BN_num_bits(aBN).toInt()
+        }
+
+        // In the negative case, the number of bits in a is the same as the number of bits in |a|,
+        // except one less when |a| is a power of two.
+        val positiveA = boringssl.BN_new()
+
+        if (boringssl.BN_copy(positiveA, aBN) == null) {
+            boringssl.BN_free(positiveA)
+            throw ArithmeticException("BN_copy failed")
+            return -1;
+        }
+
+        boringssl.BN_set_negative(positiveA, 0)
+        val numBits = if (boringssl.BN_is_pow2(positiveA) != 0) boringssl.BN_num_bits(positiveA).toInt() - 1 else boringssl.BN_num_bits(positiveA).toInt()
+
+        boringssl.BN_free(positiveA);
+        return numBits;
+    }
 
     // int BN_is_bit_set(const BIGNUM *a, int n);
     fun BN_is_bit_set(a: Long, n: Int): Boolean {
@@ -414,5 +529,7 @@ internal actual object NativeBN {
     }
 
     // &BN_free
-    external fun getNativeFinalizer(): Long
+    /* TODO IOS Maybe needed? - commented out in BigInt.kt
+    fun getNativeFinalizer(): Long
+    */
 }
