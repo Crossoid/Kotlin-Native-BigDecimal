@@ -602,7 +602,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             }
             offset++
         }
-        unscaledBuffer.append(`in`, begin, offset - begin)
+        unscaledBuffer.appendRange(`in`, begin, offset)
         bufLength += offset - begin
         // A decimal point was found
         if (offset <= last && `in`[offset] == '.') {
@@ -623,7 +623,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             }
             scale = offset - begin
             bufLength += scale
-            unscaledBuffer.append(`in`, begin, scale)
+            unscaledBuffer.appendRange(`in`, begin, offset)
         } else {
             scale = 0
         }
