@@ -43,7 +43,6 @@ internal actual object NativeBN {
      * Convert the Long to the C representation of BIGNUM.
      */
     private fun toBigNum(a: Long): CPointer<BIGNUM>? {
-        checkValid(a)
         return a.toCPointer<BIGNUM>()
     }
 
