@@ -2022,7 +2022,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         if (precision != 0) {
             return precision
         }
-        precision = if (bitLength == 0) {
+        var computedPrecision = if (bitLength == 0) {
             1
         } else if (bitLength < 64) {
             decimalDigitsInLong(smallValue)
@@ -2035,6 +2035,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 decimalDigits++
             }
             decimalDigits
+        }
+        try {
+            precision = computedPrecision
+        }
+        catch (e: kotlin.native.concurrent.InvalidMutabilityException) {
+            // TODO IOS
+            // HACK - from some reason the BigDecimal is frozen sometimes and we cannot cache the value
+            return computedPrecision
         }
         return precision
     }
@@ -2463,7 +2471,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             return toStringImage!!
         }
         if (bitLength < 32) {
-            toStringImage = Conversion.toDecimalScaledString(smallValue, scale)
+            // TODO IOS
+            // Avoid InvalidMutabilityException
+            try {
+                toStringImage = Conversion.toDecimalScaledString(smallValue, scale)
+            }
+            catch (e: kotlin.native.concurrent.InvalidMutabilityException) {
+                return Conversion.toDecimalScaledString(smallValue, scale)!!
+            }
             return toStringImage!!
         }
         val intString = unscaledValue.toString()
@@ -3105,7 +3120,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     private var unscaledValue: BigInteger
         private get() {
             if (intVal == null) {
-                intVal = BigInteger.valueOf(smallValue)
+                try {
+                    intVal = BigInteger.valueOf(smallValue)
+                }
+                catch (e: kotlin.native.concurrent.InvalidMutabilityException) {
+                    // TODO IOS
+                    // HACK - no idea why I'm getting a "frozen" exception; so don't cache the value in that case
+                    return BigInteger.valueOf(smallValue)
+                }
             }
             return intVal!!
         }
