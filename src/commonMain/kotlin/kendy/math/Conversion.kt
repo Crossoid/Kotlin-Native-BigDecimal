@@ -392,9 +392,9 @@ internal object Conversion {
         if (resLengthInChars - startPoint >= 1) {
             result1.append(result[currentChar])
             result1.append('.')
-            result1.append(result, currentChar + 1, resLengthInChars - currentChar - 1)
+            result1.appendRange(result, currentChar + 1, resLengthInChars)
         } else {
-            result1.append(result, currentChar, resLengthInChars - currentChar)
+            result1.appendRange(result, currentChar, resLengthInChars)
         }
         result1.append('E')
         if (exponent > 0) {

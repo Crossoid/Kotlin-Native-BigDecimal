@@ -2617,7 +2617,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                     result.append(CH_ZEROS)
                     delta -= CH_ZEROS.size
                 }
-                result.append(CH_ZEROS, 0, delta)
+                result.appendRange(CH_ZEROS, 0, delta)
                 result.append(intStr.substring(begin))
             } else {
                 delta = begin - delta
@@ -2632,7 +2632,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 result.append(CH_ZEROS)
                 delta += CH_ZEROS.size
             }
-            result.append(CH_ZEROS, 0, -delta)
+            result.appendRange(CH_ZEROS, 0, -delta)
         }
         return result.toString()
     }
