@@ -184,17 +184,21 @@ internal actual object NativeBN {
         checkValid(a)
 
         val aBN = toBigNum(a)
-        var word: ULong = 0UL
 
-        if (boringssl.BN_get_u64(aBN, cValuesOf(word)) != 0) {
-            if (boringssl.BN_is_negative(aBN) != 0)
-                return -(word.toLong())
-            else
-                return word.toLong()
-        } else {
-            // This should be unreachable if our caller checks BigInt::twosCompFitsIntoBytes(8)
-            throw ArithmeticException("BN_get_u64 failed")
-            return 0;
+        memScoped {
+            val wordPointer = alloc<ULongVar>()
+            wordPointer.value = 0UL
+
+            if (boringssl.BN_get_u64(aBN, wordPointer.ptr) != 0) {
+                if (boringssl.BN_is_negative(aBN) != 0)
+                    return -(wordPointer.value.toLong())
+                else
+                    return wordPointer.value.toLong()
+            } else {
+                // This should be unreachable if our caller checks BigInt::twosCompFitsIntoBytes(8)
+                throw ArithmeticException("BN_get_u64 failed")
+                return 0;
+            }
         }
     }
 
@@ -516,13 +520,17 @@ internal actual object NativeBN {
         checkValid(candidate)
 
         val ctx = boringssl.BN_CTX_new()
-        var is_probably_prime: Int = 0
-        if (boringssl.BN_primality_test(cValuesOf(is_probably_prime), toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
-            throw ArithmeticException("BN_primality_test failed")
-        }
+        memScoped {
+            val is_probably_prime = alloc<IntVar>()
+            is_probably_prime.value = 0
 
-        if (is_probably_prime != 0)
-            return true
+            if (boringssl.BN_primality_test(is_probably_prime.ptr, toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
+                throw ArithmeticException("BN_primality_test failed")
+            }
+
+            if (is_probably_prime.value != 0)
+                return true
+        }
 
         return false
     }
