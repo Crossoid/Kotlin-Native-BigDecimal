@@ -1,4 +1,12 @@
-To build the 'nativebn' lib to try the Kendy's BigDecimal port:
+BigDecimal depends on the 'bignum' native implementation from the Google's
+'boringssl' package.  The library can be built both for JNI (Java Native
+Interface) for Android, and as a static library for iOS.
+
+The JNI approach is only experimental, mostly for testing, because in a real
+app, you'll probably prefer the java.math.BigDecimal; most probably only the
+iOS port is interesting for you, so follow the 'iOS' parts of the following.
+
+To build the 'nativebn' lib for the Kendy's BigDecimal port:
 
 = Pre-requirements =
 
@@ -7,10 +15,14 @@ To build the 'nativebn' lib to try the Kendy's BigDecimal port:
 
 = Build BoringSSL =
 
+Changed dir to 'ios' (or to 'jni' - if you want to build the JNI version).
+
+cd ios
+
 git clone git@github.com:google/boringssl.git
 cd boringssl
-mkdir build
-cd build
+mkdir build-x86_64
+cd build-x86_64
 
 = Configure & build BoringSSL =
 
@@ -21,12 +33,12 @@ cd build
 
 * For iOS Simulator:
 
-  /Volumes/cmake-3.18.6-Darwin-x86_64/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
+  /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
   make -j8
 
 * For iOS (probably - untested):
 
-  /Volumes/cmake-3.18.6-Darwin-x86_64/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
+  /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
 
 = Build nativebn - JNI =
 
@@ -37,17 +49,23 @@ git clone https://android.googlesource.com/platform/libcore
 # checked out, and run:
 ./build-nativebn.sh
 
-== Install ==
+== Install - JNI ==
 
 sudo cp libnativebn.so /usr/lib64/
 
-= Build native part - K/N =
+== Install - iOS ==
+
+No particular installation is necessary, the 'cinterops' bits from
+build.gradle.kts take care of this.  The following is only for the
+case you'd like to build the klib by hand.
+
+= Build the native boringssl library - iOS =
 
 # https://kotlinlang.org/docs/native-libraries.html#library-search-sequence
 # https://github.com/JetBrains/kotlin-native/issues/2314
 
-~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/cinterop -def ssl.def -o ssl
+cd ../..
 
-== Install ==
+~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/cinterop -def boringssl.def -o boringssl
 
-~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/klib install ssl.klib
+~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/klib install boringssl.klib

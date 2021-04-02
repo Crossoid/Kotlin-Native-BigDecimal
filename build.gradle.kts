@@ -15,7 +15,7 @@ repositories {
 
 kotlin {
     android()
-    iosX64("ios") {
+    ios {
         binaries {
             framework {
                 baseName = "library"
@@ -28,15 +28,13 @@ kotlin {
             compilations["main"].cinterops {
                 val boringssl by creating {
                     // Def-file describing the native API.
-                    // The default path is src/nativeInterop/cinterop/<interop-name>.def
-                    // TODO find a way to not hardcode the path...
-                    defFile(project.file("/Volumes/Projects/BigDecimal/bignum/ios/boringssl.def"))
+                    defFile(project.file("./bignum/ios/boringssl.def"))
 
                     // Package to place the Kotlin API generated.
                     packageName("boringssl")
 
                     // Options to be passed to compiler by cinterop tool.
-                    //compilerOpts("-Ipath/to/headers")
+                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-x86_64/crypto -L./bignum/ios/boringssl/build-x86_64/ssl")
 
                     // Directories for header search (an analogue of the -I<path> compiler option).
                     //includeDirs.allHeaders("path1", "path2")
