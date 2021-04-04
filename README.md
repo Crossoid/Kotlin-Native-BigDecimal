@@ -62,7 +62,7 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
 
         cd ../../../..
 
-* Build the BigDecimal.klib and libs/BigDecimal-cinterop-boringssl.klib
+* Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
         ./gradlew compileKotlinIosX64
 
@@ -70,7 +70,7 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
 
         build/classes/kotlin/iosX64/main/
 
-* Intercorporate the resulting klibs into your project
+* Incorporate the resulting klibs into your project
 
   You can copy them to some convenient location, and then update your
   build.gradle.kts:
@@ -85,7 +85,7 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
   Then change the imports of java.math.BigDecimal to kendy.math.BigDecimal and
   you are done.
 
-  If you want to use the Kotlin/Native BigDecimal in a KMM project, you
+* If you want to use the Kotlin/Native BigDecimal in a KMM project, you
   probably want to use an expect/actual combination; like:
 
   commonMain/kotlin/your/project/BigDecimal.kt:
@@ -130,5 +130,5 @@ are some ideas what to improve if you want to help:
 
 * And anything else you'd be interested in :-)
 
-For patches, please just do PR's & I'll review them.  For bugs, pleasecreate
+For patches, please just do PR's & I'll review them.  For bugs, please create
 GH issues; though no promises when I get to fixing them.
