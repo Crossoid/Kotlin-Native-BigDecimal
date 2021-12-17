@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.4.10"
+    kotlin("multiplatform") version "1.5.30-M1"
     id("com.android.library")
     id("kotlin-android-extensions")
 }
@@ -9,13 +9,42 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
 }
 
 kotlin {
     android()
     ios {
+        binaries {
+            framework {
+                baseName = "library"
+            }
+        }
+        // Build a native interop from the boringssl library; details here:
+        // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
+        // The boringssl provides the BIGNUM implementation
+        compilations["main"].cinterops {
+            compilations["main"].cinterops {
+                val boringssl by creating {
+                    // Def-file describing the native API.
+                    defFile(project.file("./bignum/ios/boringssl.def"))
+
+                    // Package to place the Kotlin API generated.
+                    packageName("boringssl")
+
+                    // Options to be passed to compiler by cinterop tool.
+                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
+
+                    // Directories for header search (an analogue of the -I<path> compiler option).
+                    //includeDirs.allHeaders("path1", "path2")
+
+                    // A shortcut for includeDirs.allHeaders.
+                    //includeDirs("include/directory", "another/directory")
+                }
+            }
+        }
+    }
+    iosSimulatorArm64() {
         binaries {
             framework {
                 baseName = "library"
@@ -65,15 +94,18 @@ kotlin {
             }
         }
         val iosMain by getting
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain)
+        }
         val iosTest by getting
     }
 }
 
 android {
-    compileSdkVersion(29)
+    compileSdkVersion(31)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdkVersion(24)
-        targetSdkVersion(29)
+        targetSdkVersion(31)
     }
 }
