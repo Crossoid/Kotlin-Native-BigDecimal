@@ -64,7 +64,7 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
 
 * Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
-        ./gradlew compileKotlinIosArm64
+        ./gradlew compileKotlinIosSimulatorArm64
 
   The resulting libraries are in:
 
@@ -105,7 +105,7 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
 
 # Contributing
 
-I don't plan to work too extensively on the code unless if find bugs I need to
+I don't plan to work too extensively on the code unless I find bugs I need to
 fix (as said, the library is mostly a port from the Android Open Source
 Project anyway), but still there are many things to improve.
 
