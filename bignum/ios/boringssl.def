@@ -1,5 +1,5 @@
 headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
 compilerOpts = -I./bignum/ios/boringssl/include
 staticLibraries = libcrypto.a libssl.a
-libraryPaths = ./bignum/ios/boringssl/build-x86_64/crypto ./bignum/ios/boringssl/build-x86_64/ssl
+libraryPaths = ./bignum/ios/boringssl/build-arm64/crypto ./bignum/ios/boringssl/build-arm64/ssl
 package = boringssl

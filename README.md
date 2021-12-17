@@ -54,21 +54,21 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
 
         git clone git@github.com:google/boringssl.git
         cd boringssl
-        mkdir build-x86_64
-        cd build-x86_64
+        mkdir build-arm64
+        cd build-arm64
 
-        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=x86_64 ..
+        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 ..
         make -j8
 
         cd ../../../..
 
 * Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
-        ./gradlew compileKotlinIosX64
+        ./gradlew compileKotlinIosArm64
 
   The resulting libraries are in:
 
-        build/classes/kotlin/iosX64/main/
+        build/classes/kotlin/iosArm64/main/
 
 * Incorporate the resulting klibs into your project
 

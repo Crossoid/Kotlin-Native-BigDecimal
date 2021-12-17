@@ -34,7 +34,7 @@ kotlin {
                     packageName("boringssl")
 
                     // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-x86_64/crypto -L./bignum/ios/boringssl/build-x86_64/ssl")
+                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
 
                     // Directories for header search (an analogue of the -I<path> compiler option).
                     //includeDirs.allHeaders("path1", "path2")
