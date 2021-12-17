@@ -130,7 +130,7 @@ internal object Conversion {
         if (sign == -1) {
             result[--currentChar] = '-'
         }
-        return String(result, currentChar, resLengthInChars - currentChar)
+        return result.concatToString(currentChar, currentChar + (resLengthInChars - currentChar))
     }
 
     /**
@@ -243,9 +243,10 @@ internal object Conversion {
             if (negNumber) {
                 result[--currentChar] = '-'
             }
-            return String(
-                result, currentChar, resLengthInChars
+            return result.concatToString(
+                currentChar, currentChar + (resLengthInChars
                         - currentChar
+                        )
             )
         }
         if (scale > 0 && exponent >= -6) {
@@ -259,9 +260,10 @@ internal object Conversion {
                 if (negNumber) {
                     result[--currentChar] = '-'
                 }
-                return String(
-                    result, currentChar, resLengthInChars
+                return result.concatToString(
+                    currentChar, currentChar + (resLengthInChars
                             - currentChar + 1
+                            )
                 )
             }
             // special case 2
@@ -273,9 +275,10 @@ internal object Conversion {
             if (negNumber) {
                 result[--currentChar] = '-'
             }
-            return String(
-                result, currentChar, resLengthInChars
+            return result.concatToString(
+                currentChar, currentChar + (resLengthInChars
                         - currentChar
+                        )
             )
         }
         val startPoint = currentChar + 1
@@ -358,7 +361,10 @@ internal object Conversion {
             if (negNumber) {
                 result[--currentChar] = '-'
             }
-            return String(result, currentChar, resLengthInChars - currentChar)
+            return result.concatToString(
+                currentChar,
+                currentChar + (resLengthInChars - currentChar)
+            )
         }
         if (scale > 0 && exponent >= -6) {
             if (exponent >= 0) {
@@ -371,7 +377,10 @@ internal object Conversion {
                 if (negNumber) {
                     result[--currentChar] = '-'
                 }
-                return String(result, currentChar, resLengthInChars - currentChar + 1)
+                return result.concatToString(
+                    currentChar,
+                    currentChar + (resLengthInChars - currentChar + 1)
+                )
             }
             // special case 2
             for (j in 2 until -exponent + 1) {
@@ -382,7 +391,10 @@ internal object Conversion {
             if (negNumber) {
                 result[--currentChar] = '-'
             }
-            return String(result, currentChar, resLengthInChars - currentChar)
+            return result.concatToString(
+                currentChar,
+                currentChar + (resLengthInChars - currentChar)
+            )
         }
         val startPoint = currentChar + 1
         val result1 = StringBuilder(16 + resLengthInChars - startPoint)

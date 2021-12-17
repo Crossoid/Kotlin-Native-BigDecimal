@@ -639,7 +639,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 }
             }
             // Accumulating all remaining digits
-            scaleString = String(`in`, begin, last + 1 - begin)
+            scaleString = `in`.concatToString(begin, begin + (last + 1 - begin))
             // Checking if the scale is defined
             newScale = scale.toLong() - scaleString.toInt()
             scale = newScale.toInt()
