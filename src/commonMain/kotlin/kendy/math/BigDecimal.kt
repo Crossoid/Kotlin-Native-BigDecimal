@@ -21,6 +21,7 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
 import kotlin.math.*
+import kotlin.native.concurrent.ThreadLocal
 
 /**
  * An immutable arbitrary-precision signed decimal.
@@ -41,6 +42,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     @Transient
     private var hashCode = 0
 
+    @ThreadLocal
     companion object {
         /**
          * Rounding mode where positive values are rounded towards positive infinity
