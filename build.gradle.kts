@@ -1,7 +1,8 @@
 plugins {
-    kotlin("multiplatform") version "1.5.30-M1"
+    kotlin("multiplatform") version "1.6.10"
     id("com.android.library")
     id("kotlin-android-extensions")
+    kotlin("plugin.serialization") version "1.6.21"
 }
 
 group = "kendy.math"
@@ -75,7 +76,11 @@ kotlin {
         }
     }
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
@@ -84,7 +89,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("com.google.android.material:material:1.2.1")
+                implementation("com.google.android.material:material:1.6.1")
             }
         }
         val androidTest by getting {
@@ -102,10 +107,10 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(31)
+    compileSdkVersion(32)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdkVersion(24)
-        targetSdkVersion(31)
+        targetSdkVersion(32)
     }
 }

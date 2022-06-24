@@ -16,12 +16,13 @@
  */
 package kendy.math
 
+import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
-import kotlin.jvm.Transient
 import kotlin.math.sqrt
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.random.Random
+import kotlinx.serialization.Transient
 
 /**
  * An immutable arbitrary-precision signed integer.
@@ -37,6 +38,7 @@ import kotlin.random.Random
  * this implementation, so such methods may be inefficient. Use [ ] for high-performance bitwise operations on
  * arbitrarily-large sequences of bits.
  */
+@Serializable
 class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     @Transient
     private var bigInt: BigInt? = null
