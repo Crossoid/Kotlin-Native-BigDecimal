@@ -2,7 +2,6 @@ plugins {
     kotlin("multiplatform") version "1.6.10"
     id("com.android.library")
     id("kotlin-android-extensions")
-    kotlin("plugin.serialization") version "1.6.21"
 }
 
 group = "kendy.math"
@@ -76,11 +75,7 @@ kotlin {
         }
     }
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-            }
-        }
+        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))

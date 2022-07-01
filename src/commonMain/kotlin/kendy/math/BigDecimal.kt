@@ -19,10 +19,9 @@ package kendy.math
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
+import kotlin.jvm.Transient
 import kotlin.math.*
 import kotlin.native.concurrent.ThreadLocal
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 
 /**
  * An immutable arbitrary-precision signed decimal.
@@ -34,7 +33,6 @@ import kotlinx.serialization.Transient
  *
  * Most operations allow you to supply a [MathContext] to specify a desired rounding mode.
  */
-@Serializable
 class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     /** The `String` representation is cached.  */
     @Transient

@@ -15,16 +15,16 @@
  */
 package kendy.math
 
+//import dalvik.annotation.optimization.ReachabilitySensitive
+//import libcore.util.NativeAllocationRegistry
 import kotlin.jvm.JvmStatic
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
+import kotlin.jvm.Transient
 
 /*
  * In contrast to BigIntegers this class doesn't fake two's complement representation.
  * Any Bit-Operations, including Shifting, solely regard the unsigned magnitude.
  * Moreover BigInt objects are mutable and offer efficient in-place-operations.
  */
-@Serializable
 class BigInt {
     /* Fields used for the internal representation. */
     //@ReachabilitySensitive
