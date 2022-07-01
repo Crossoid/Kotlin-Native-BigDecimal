@@ -16,7 +16,6 @@
  */
 package kendy.math
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
@@ -24,28 +23,6 @@ import kotlin.math.sqrt
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.random.Random
 import kotlinx.serialization.Transient
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-
-/**
- * Custom serializer; the most primitive one, just serialize to the string representation (and back).
- */
-object BigIntegerSerializer : KSerializer<BigInteger> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigInteger", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: BigInteger) {
-        val string = value.toString()
-        encoder.encodeString(string)
-    }
-
-    override fun deserialize(decoder: Decoder): BigInteger {
-        val string = decoder.decodeString()
-        return BigInteger(string)
-    }
-}
 
 /**
  * An immutable arbitrary-precision signed integer.
@@ -61,7 +38,7 @@ object BigIntegerSerializer : KSerializer<BigInteger> {
  * this implementation, so such methods may be inefficient. Use [ ] for high-performance bitwise operations on
  * arbitrarily-large sequences of bits.
  */
-@Serializable(with = BigIntegerSerializer::class)
+@Serializable
 class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     @Transient
     private var bigInt: BigInt? = null
@@ -1141,6 +1118,34 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         val copyDigits = IntArray(numberLength)
         java.lang.System.arraycopy(digits, 0, copyDigits, 0, numberLength)
         return BigInteger(sign, numberLength, copyDigits)
+    }
+    */
+
+    /**
+     * Assigns all transient fields upon deserialization of a `BigInteger`
+     * instance.
+     */
+    /* TODO IOS
+    @Throws(java.io.IOException::class, java.lang.ClassNotFoundException::class)
+    private fun readObject(`in`: java.io.ObjectInputStream) {
+        `in`.defaultReadObject()
+        val bigInt = BigInt()
+        bigInt.putBigEndian(magnitude, signum < 0)
+        setBigInt(bigInt)
+    }
+    */
+
+    /**
+     * Prepares this `BigInteger` for serialization, i.e. the
+     * non-transient fields `signum` and `magnitude` are assigned.
+     */
+    /* TODO IOS
+    @Throws(java.io.IOException::class)
+    private fun writeObject(out: java.io.ObjectOutputStream) {
+        val bigInt = getBigInt()
+        signum = bigInt!!.sign()
+        magnitude = bigInt.bigEndianMagnitude()
+        out.defaultWriteObject()
     }
     */
 

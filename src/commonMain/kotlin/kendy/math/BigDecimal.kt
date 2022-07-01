@@ -16,7 +16,6 @@
  */
 package kendy.math
 
-import kotlinx.serialization.KSerializer
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
@@ -24,28 +23,6 @@ import kotlin.math.*
 import kotlin.native.concurrent.ThreadLocal
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-
-/**
- * Custom serializer; the most primitive one, just serialize to the string representation (and back).
- */
-object BigDecimalSerializer : KSerializer<BigDecimal> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: BigDecimal) {
-        val string = value.toString()
-        encoder.encodeString(string)
-    }
-
-    override fun deserialize(decoder: Decoder): BigDecimal {
-        val string = decoder.decodeString()
-        return BigDecimal(string)
-    }
-}
 
 /**
  * An immutable arbitrary-precision signed decimal.
@@ -57,7 +34,7 @@ object BigDecimalSerializer : KSerializer<BigDecimal> {
  *
  * Most operations allow you to supply a [MathContext] to specify a desired rounding mode.
  */
-@Serializable(with = BigDecimalSerializer::class)
+@Serializable
 class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     /** The `String` representation is cached.  */
     @Transient
@@ -3100,6 +3077,34 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     private fun approxPrecision(): Int {
         return if (precision > 0) precision else ((bitLength - 1) * LOG10_2).toInt() + 1
     }
+
+    /**
+     * Assigns all transient fields upon deserialization of a
+     * `BigDecimal` instance (bitLength and smallValue). The transient
+     * field precision is assigned lazily.
+     */
+    /* TODO IOS
+    @Throws(java.io.IOException::class, java.lang.ClassNotFoundException::class)
+    private fun readObject(`in`: java.io.ObjectInputStream) {
+        `in`.defaultReadObject()
+        bitLength = intVal!!.bitLength()
+        if (bitLength < 64) {
+            smallValue = intVal!!.toLong()
+        }
+    }
+    */
+
+    /**
+     * Prepares this `BigDecimal` for serialization, i.e. the
+     * non-transient field `intVal` is assigned.
+     */
+    /* TODO IOS
+    @Throws(java.io.IOException::class)
+    private fun writeObject(out: java.io.ObjectOutputStream) {
+        unscaledValue
+        out.defaultWriteObject()
+    }
+    */
 
     private var unscaledValue: BigInteger
         private get() {
