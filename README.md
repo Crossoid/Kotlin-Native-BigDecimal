@@ -40,7 +40,7 @@ just continue reading how to build it all.
 
 # Building
 
-So far I've tested this only with the iOS Simulator.  To build for that, do:
+I've tested this both with the iOS Simulator and a device.  To build, do:
 
 * Install dependencies for building BoringSSL
 
@@ -57,18 +57,31 @@ So far I've tested this only with the iOS Simulator.  To build for that, do:
         mkdir build-arm64
         cd build-arm64
 
+  Simulator:
+
         /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 ..
+        make -j8
+
+  Device:
+
+        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 ..
         make -j8
 
         cd ../../../..
 
 * Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
+  Simulator:
+
         ./gradlew compileKotlinIosSimulatorArm64
 
-  The resulting libraries are in:
+	(resulting libraries are in: build/classes/kotlin/iosSimulatorArm64/main/)
 
-        build/classes/kotlin/iosArm64/main/
+  Device:
+
+        ./gradlew compileKotlinIosArm64
+
+	(resulting libraries are in: build/classes/kotlin/iosArm64/main/)
 
 * Incorporate the resulting klibs into your project
 
