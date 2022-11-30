@@ -1,9 +1,12 @@
 # Kotline/Native BigDecimal
 
-This is a drop-in replacement for java.math.BigDecimal.  If you are have a
+This is a drop-in replacement for java.math.BigDecimal.  If you have a
 Kotlin/JVM project, want to port it to Kotlin/Native, but struggle because
 you are using java.math.BigDecimal and cannot find an implementation, this is
 the library you want to use.
+
+The code is production-ready and used in the iOS port of [HiPER Scientific
+Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530).
 
 This library (BigDecimal.klib) has the same API as java.math.BigDecimal, all
 you need to do is to change:
