@@ -16,12 +16,9 @@
  */
 package kendy.math
 
-import kotlin.native.concurrent.ThreadLocal
-
 /**
  * Static library that provides all multiplication of [BigInteger] methods.
  */
-@ThreadLocal
 internal object Multiplication {
     // BEGIN Android-removed
     // /**

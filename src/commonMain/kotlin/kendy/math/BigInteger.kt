@@ -20,7 +20,6 @@ import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
 import kotlin.math.sqrt
-import kotlin.native.concurrent.ThreadLocal
 import kotlin.random.Random
 
 /**
@@ -1147,7 +1146,6 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     }
     */
 
-    @ThreadLocal
     companion object {
         /** This is the serialVersionUID used by the sun implementation.  */
         private const val serialVersionUID = -8287574255936472291L
