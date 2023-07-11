@@ -778,6 +778,13 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     }
 
     /**
+     * Returns this `BigInteger` as BigDecimal.
+     */
+    inline fun toBigDecimal(): BigDecimal {
+        return BigDecimal(this)
+    }
+
+    /**
      * Compares this `BigInteger` with `value`. Returns `-1`
      * if `this < value`, `0` if `this == value` and `1`
      * if `this > value`, .

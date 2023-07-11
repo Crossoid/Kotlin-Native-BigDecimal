@@ -3116,4 +3116,24 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 smallValue = unscaledValue.toLong()
             }
         }
+
+    /**
+     * Implements the `+` for convenience in Kotlin.
+     */
+    inline operator fun plus(value: BigDecimal) = this.add(value)
+
+    /**
+     * Implements the `-` for convenience in Kotlin
+     */
+    inline operator fun minus(value: BigDecimal) = this.subtract(value)
+
+    /**
+     * Implements the `*` for convenience in Kotlin
+     */
+    inline operator fun times(value: BigDecimal) = this.multiply(value)
+
+    /**
+     * Implements the `/` for convenience in Kotlin
+     */
+    inline operator fun div(value: BigDecimal) = this.divide(value)
 }
