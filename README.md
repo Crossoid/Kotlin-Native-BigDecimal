@@ -9,21 +9,21 @@ The code is production-ready and used in the iOS port of [HiPER Scientific
 Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530).
 
 This library (BigDecimal.klib) has the same API as java.math.BigDecimal, all
-you need to do is to change:
+you need to do is to add the library to your build.gradle.kts like:
+
+    val iosArm64Main by getting {
+        dependencies {
+            implementation(files("libs/iosArm64/BigDecimal.klib"))
+            implementation(files("libs/iosArm64/BigDecimal-cinterop-boringssl.klib"))
+        }
+    }
+
+And then, import the BigDecimal classes as if you were developing for Kotlin/JVM:
 
     import java.math.BigDecimal
 
-to
-
-    import kendy.math.BigDecimal
-
-and add it to the dependencies in your project.
-
-Of course, if you are using [KMM](https://kotlinlang.org/lp/mobile/), you can
-create the appropriate
-[expect/actual](https://kotlinlang.org/docs/mpp-connect-to-apis.html) declarations,
-and use java.math.BigDecimal in the Kotlin/JVM part of the project, and
-kendy.math.BigDecimal in the Kotlin/Native part.
+Please read below how to build the actual BigDecimal.klib and BigDecimal-cineterop-boringssl.klib,
+I am not providing binary builds yet (sorry about that!).
 
 # How does it work
 
@@ -101,35 +101,19 @@ I've tested this both with the iOS Simulator and a device.  To build, do:
   Then change the imports of java.math.BigDecimal to kendy.math.BigDecimal and
   you are done.
 
-* If you want to use the Kotlin/Native BigDecimal in a KMM project, you
-  probably want to use an expect/actual combination; like:
-
-  commonMain/kotlin/your/project/BigDecimal.kt:
-
-        package your.project
-        expect class BigDecimal
-
-  androidMain/kotlin/your/projec/BigDecimal.kt:
-
-        package your.project
-        actual typealias BigDecimal = java.math.BigDecimal
-
-  iosMain/kotlin/your/projec/BigDecimal.kt:
-
-        package your.project
-        actual typealias BigDecimal = kendy.math.BigDecimal
-
 # Contributing
 
-I don't plan to work too extensively on the code unless I find bugs I need to
-fix (as said, the library is mostly a port from the Android Open Source
-Project anyway), but still there are many things to improve.
+I use this code in production in the iOS port of [HiPER Scientific
+Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530)
+where it undergoes over 2000 unit tests, so I am pretty sure it is stable and
+produces good results.
+
+As such, it does not need too much work, apart from making it more generally
+usable as a drop-in replacement for the Java BigDecimal (like convenience classes,
+extension functions, etc.). But if I find bugs, I will fix them.
 
 I'll be excited to incorporate your patches if you want to contribute!  Here
 are some ideas what to improve if you want to help:
-
-* I am sure there are bugs; I've probably fixed the most obvious ones, but
-  I've tested the code only minimally so far.  Any fixes much appreciated!
 
 * The code builds with various warnings - I'll appreciate patches to fix
   those.
@@ -139,12 +123,12 @@ are some ideas what to improve if you want to help:
   the box, and for the correct platform.
 
 * Automate the build of the Kotlin/JVM part too - so that it can be used for
-  Android development too, without the need for expect/actual.
+  Android development too if necessary for some reason.
 
-* Unit tests!  There are no automated tests so far, would be great to have at
+* Unit tests!  There are no incorporated automated tests so far, would be great to have at
   least few as a start...
 
 * And anything else you'd be interested in :-)
 
 For patches, please just do PR's & I'll review them.  For bugs, please create
-GH issues; though no promises when I get to fixing them.
+GitHub issues.
