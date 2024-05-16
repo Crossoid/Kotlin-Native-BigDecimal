@@ -1,0 +1,5 @@
+headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
+compilerOpts = -I./bignum/ios/boringssl/include
+staticLibraries = libcrypto.a libssl.a
+libraryPaths = ./bignum/ios/boringssl/build-arm64-simulator/crypto ./bignum/ios/boringssl/build-arm64-simulator/ssl
+package = boringssl

@@ -1,10 +1,15 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     kotlin("multiplatform") version "1.8.10"
     id("com.android.library")
+    id("maven-publish")
 }
 
-group = "kendy.math"
-version = "1.0-SNAPSHOT"
+// For publishing; publish with:
+// ./gradlew publishAllPublicationsToGitHubPackagesRepository
+group = "com.crossoid"
+version = "1.0"
 
 repositories {
     google()
@@ -12,7 +17,9 @@ repositories {
 }
 
 kotlin {
-    android()
+    android() {
+        publishLibraryVariants("release", "debug")
+    }
     ios {
         binaries {
             framework {
@@ -56,13 +63,13 @@ kotlin {
             compilations["main"].cinterops {
                 val boringssl by creating {
                     // Def-file describing the native API.
-                    defFile(project.file("./bignum/ios/boringssl.def"))
+                    defFile(project.file("./bignum/ios/boringssl-simulator.def"))
 
                     // Package to place the Kotlin API generated.
                     packageName("boringssl")
 
                     // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
+                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64-simulator/crypto -L./bignum/ios/boringssl/build-arm64-simulator/ssl")
 
                     // Directories for header search (an analogue of the -I<path> compiler option).
                     //includeDirs.allHeaders("path1", "path2")
@@ -97,4 +104,17 @@ kotlin {
 android {
     compileSdkVersion(32)
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            setUrl("https://maven.pkg.github.com/crossoid/Kotlin-Native-BigDecimal")
+            credentials {
+                username = gradleLocalProperties(rootDir).getProperty("github_user")
+                password = gradleLocalProperties(rootDir).getProperty("github_token")
+            }
+        }
+    }
 }

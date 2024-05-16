@@ -13,5 +13,5 @@ pluginManagement {
         }
     }
 }
-rootProject.name = "BigDecimal"
+rootProject.name = "kotlin-native-bigdecimal"
 
