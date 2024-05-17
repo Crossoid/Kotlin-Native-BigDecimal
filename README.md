@@ -8,22 +8,22 @@ the library you want to use.
 The code is production-ready and used in the iOS port of [HiPER Scientific
 Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530).
 
-This library (BigDecimal.klib) has the same API as java.math.BigDecimal, all
-you need to do is to add the library to your build.gradle.kts like:
+This library has the same API as java.math.BigDecimal, all you need to do
+is to add the GitHub Packages repository and the library to your build.gradle.kts,
+because binary packages are now available.
 
     val iosArm64Main by getting {
         dependencies {
-            implementation(files("libs/iosArm64/BigDecimal.klib"))
-            implementation(files("libs/iosArm64/BigDecimal-cinterop-boringssl.klib"))
+            implementation("com.crossoid:kotlin-native-bigdecimal:1.0")
         }
     }
 
-And then, import the BigDecimal classes as if you were developing for Kotlin/JVM:
+Then, you can import the BigDecimal classes as if you were developing for Kotlin/JVM:
 
     import java.math.BigDecimal
 
-Please read below how to build the actual BigDecimal.klib and BigDecimal-cineterop-boringssl.klib,
-I am not providing binary builds yet (sorry about that!).
+Please see the [example project](https://github.com/Crossoid/Kotlin-Native-BigDecimal-Example)
+for exact details how to import the library and how to use it.
 
 # How does it work
 
