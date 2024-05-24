@@ -1,4 +1,4 @@
-# Kotline/Native BigDecimal (Kotlin Multiplatform for iOS)
+# Kotlin/Native BigDecimal (Kotlin Multiplatform for iOS)
 
 This is a drop-in replacement for java.math.BigDecimal.  If you have a
 Kotlin/JVM project, want to port it to Kotlin/Native iOS, but struggle because
