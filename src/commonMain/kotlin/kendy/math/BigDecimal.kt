@@ -3136,4 +3136,14 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * Implements the `/` for convenience in Kotlin
      */
     inline operator fun div(value: BigDecimal) = this.divide(value)
+
+    /**
+     * Implements the -value for convenience
+     */
+    inline operator fun unaryMinus(): BigDecimal = ZERO.minus(this)
+
+    /**
+     * Implements the +value for convenience
+     */
+    inline operator fun unaryPlus(): BigDecimal = this
 }
