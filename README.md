@@ -22,8 +22,17 @@ Then, you can import the BigDecimal classes as if you were developing for Kotlin
 
     import java.math.BigDecimal
 
-Please see the [example project](https://github.com/Crossoid/Kotlin-Native-BigDecimal-Example)
-for exact details how to import the library and how to use it.
+# Release notes
+
+Binary packages are provided via GitHub Packages, please see the
+[example project](https://github.com/Crossoid/Kotlin-Native-BigDecimal-Example)
+for exact details how to import the library and how to use it. The following
+versions were released so far:
+
+* 1.0.1
+  - Added unary plus and unary minus for BigDecimal
+* 1.0
+  - First packages released
 
 # How does it work
 
