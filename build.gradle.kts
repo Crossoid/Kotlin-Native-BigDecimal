@@ -1,7 +1,7 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
-    kotlin("multiplatform") version "1.8.10"
+    kotlin("multiplatform") version "1.9.20"
     id("com.android.library")
     id("maven-publish")
 }
@@ -17,10 +17,10 @@ repositories {
 }
 
 kotlin {
-    android() {
+    androidTarget() {
         publishLibraryVariants("release", "debug")
     }
-    ios {
+    iosArm64() {
         binaries {
             framework {
                 baseName = "library"
@@ -81,28 +81,17 @@ kotlin {
         }
     }
     sourceSets {
-        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation("com.google.android.material:material:1.8.0")
-            }
-        }
-        val iosMain by getting
-        val iosSimulatorArm64Main by getting {
-            dependsOn(iosMain)
-        }
-        val iosTest by getting
     }
 }
 
 android {
-    compileSdkVersion(32)
+    compileSdk = 34
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 }
 

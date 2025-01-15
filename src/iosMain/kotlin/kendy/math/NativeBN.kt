@@ -23,6 +23,7 @@ import kotlinx.cinterop.*
  * Binding between the Kotlin BigDecimal and boringssl's BIGNUM.
  * https://kotlinlang.org/docs/native-c-interop.html
  */
+@OptIn(ExperimentalForeignApi::class)
 actual internal object NativeBN {
     /**
      * Just throw if the BIGNUM handle is not correct.
