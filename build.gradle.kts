@@ -20,6 +20,7 @@ kotlin {
     androidTarget() {
         publishLibraryVariants("release", "debug")
     }
+    jvm { }
     iosArm64() {
         binaries {
             framework {
