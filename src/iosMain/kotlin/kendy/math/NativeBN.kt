@@ -61,6 +61,30 @@ actual internal object NativeBN {
      */
     private fun Boolean.toInt(): Int = if (this) 1 else 0
 
+    /**
+     * Run code with a temporary BN_CTX and always free it afterwards.
+     */
+    private inline fun <T> withBNContext(block: (ctx: CPointer<boringssl.BN_CTX>?) -> T): T {
+        val ctx = boringssl.BN_CTX_new() ?: throw OutOfMemoryError("BN_CTX_new failed")
+        try {
+            return block(ctx)
+        } finally {
+            boringssl.BN_CTX_free(ctx)
+        }
+    }
+
+    /**
+     * Run code with a temporary OpenSSL/BoringSSL-allocated string and always free it afterwards.
+     */
+    private inline fun <T> useOpenSslString(str: CPointer<ByteVar>?, block: (CPointer<ByteVar>) -> T): T {
+        val s = str ?: throw ArithmeticException("OpenSSL string allocation failed")
+        try {
+            return block(s)
+        } finally {
+            boringssl.OPENSSL_free(s)
+        }
+    }
+
     // BIGNUM *BN_new(void);
     actual fun BN_new(): Long {
         return toLong(boringssl.BN_new())
@@ -225,22 +249,18 @@ actual internal object NativeBN {
     actual fun BN_bn2dec(a: Long): String? {
         checkValid(a)
 
-        val tmpStr = boringssl.BN_bn2dec(toBigNum(a))
-        if (tmpStr == null) {
-            throw ArithmeticException("BN_bn2dec failed")
+        return useOpenSslString(boringssl.BN_bn2dec(toBigNum(a))) { tmpStr ->
+            leadingZerosTrimmed(tmpStr)
         }
-        return leadingZerosTrimmed(tmpStr)
     }
 
     // char * BN_bn2hex(const BIGNUM *a);
     actual fun BN_bn2hex(a: Long): String? {
         checkValid(a)
 
-        val tmpStr = boringssl.BN_bn2hex(toBigNum(a))
-        if (tmpStr == null) {
-            throw ArithmeticException("BN_bn2hex failed")
+        return useOpenSslString(boringssl.BN_bn2hex(toBigNum(a))) { tmpStr ->
+            leadingZerosTrimmed(tmpStr)
         }
-        return leadingZerosTrimmed(tmpStr)
     }
 
     // Returns result byte[] AND NOT length.
@@ -249,8 +269,11 @@ actual internal object NativeBN {
         checkValid(a)
 
         val aBN = toBigNum(a)
-        val len = boringssl.BN_num_bytes(aBN)
-        val result = ByteArray(len.toInt())
+        val len = boringssl.BN_num_bytes(aBN).toInt()
+        val result = ByteArray(len)
+
+        if (len == 0)
+            return result
 
         // "pin" to fix it in memory at a given place
         result.usePinned { pinned ->
@@ -271,6 +294,9 @@ actual internal object NativeBN {
 
         // Allocate our result with the JNI boilerplate
         val result = IntArray(intLen)
+
+        if (intLen == 0)
+            return result
 
         // "pin" to fix it in memory at a given place
         result.usePinned { pinned ->
@@ -416,9 +442,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_gcd(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
-            throw ArithmeticException("BN_gcd failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_gcd(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
+                throw ArithmeticException("BN_gcd failed")
+            }
         }
     }
 
@@ -428,9 +455,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_mul(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
-            throw ArithmeticException("BN_mul failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_mul(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
+                throw ArithmeticException("BN_mul failed")
+            }
         }
     }
 
@@ -440,9 +468,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(p)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_exp(toBigNum(r), toBigNum(a), toBigNum(p), ctx) == 0) {
-            throw ArithmeticException("BN_exp failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_exp(toBigNum(r), toBigNum(a), toBigNum(p), ctx) == 0) {
+                throw ArithmeticException("BN_exp failed")
+            }
         }
     }
 
@@ -453,9 +482,10 @@ actual internal object NativeBN {
         checkValid(m)
         checkValid(d)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
-            throw ArithmeticException("BN_div failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
+                throw ArithmeticException("BN_div failed")
+            }
         }
     }
 
@@ -465,9 +495,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(m)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_nnmod(toBigNum(r), toBigNum(a), toBigNum(m), ctx) == 0) {
-            throw ArithmeticException("BN_nnmod failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_nnmod(toBigNum(r), toBigNum(a), toBigNum(m), ctx) == 0) {
+                throw ArithmeticException("BN_nnmod failed")
+            }
         }
     }
 
@@ -478,9 +509,10 @@ actual internal object NativeBN {
         checkValid(p)
         checkValid(m)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_mod_exp(toBigNum(r), toBigNum(a), toBigNum(p), toBigNum(m), ctx) == 0) {
-            throw ArithmeticException("BN_mod_exp failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_mod_exp(toBigNum(r), toBigNum(a), toBigNum(p), toBigNum(m), ctx) == 0) {
+                throw ArithmeticException("BN_mod_exp failed")
+            }
         }
     }
 
@@ -490,9 +522,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(n)
 
-        val ctx = boringssl.BN_CTX_new()
-        if (boringssl.BN_mod_inverse(toBigNum(ret), toBigNum(a), toBigNum(n), ctx) == null) {
-            throw ArithmeticException("BN_mod_inverse failed")
+        withBNContext { ctx ->
+            if (boringssl.BN_mod_inverse(toBigNum(ret), toBigNum(a), toBigNum(n), ctx) == null) {
+                throw ArithmeticException("BN_mod_inverse failed")
+            }
         }
     }
 
@@ -512,20 +545,18 @@ actual internal object NativeBN {
     actual fun BN_primality_test(candidate: Long, checks: Int, do_trial_division: Boolean): Boolean {
         checkValid(candidate)
 
-        val ctx = boringssl.BN_CTX_new()
-        memScoped {
-            val is_probably_prime = alloc<IntVar>()
-            is_probably_prime.value = 0
+        return withBNContext { ctx ->
+            memScoped {
+                val is_probably_prime = alloc<IntVar>()
+                is_probably_prime.value = 0
 
-            if (boringssl.BN_primality_test(is_probably_prime.ptr, toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
-                throw ArithmeticException("BN_primality_test failed")
+                if (boringssl.BN_primality_test(is_probably_prime.ptr, toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
+                    throw ArithmeticException("BN_primality_test failed")
+                }
+
+                is_probably_prime.value != 0
             }
-
-            if (is_probably_prime.value != 0)
-                return true
         }
-
-        return false
     }
 
     // &BN_free
