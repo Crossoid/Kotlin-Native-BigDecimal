@@ -1319,8 +1319,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 }
             }
         }
-        var scaledDividend = unscaledValue!!
-        var scaledDivisor = divisor.unscaledValue!! // for scaling of 'u2'
+        var scaledDividend = unscaledValue
+        var scaledDivisor = divisor.unscaledValue // for scaling of 'u2'
         if (diffScale > 0) {
             // Multiply 'u2'  by:  10^((s1 - s2) - scale)
             scaledDivisor =
@@ -1873,7 +1873,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         val mcPrecision: Int = mc.precision
         val elength = log10(m.toDouble()).toInt() + 1 // decimal digits in 'n'
         var oneBitMask: Int // mask of bits
-        var accum: BigDecimal? // the single accumulator
+        var accum: BigDecimal // the single accumulator
         var newPrecision: kendy.math.MathContext = mc // MathContext by default
 
         // In particular cases, it reduces the problem to call the other 'pow()'
@@ -1895,9 +1895,9 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         accum = round(newPrecision)
         oneBitMask = m.takeHighestOneBit() shr 1
         while (oneBitMask > 0) {
-            accum = accum!!.multiply(accum, newPrecision)
+            accum = accum.multiply(accum, newPrecision)
             if (m and oneBitMask == oneBitMask) {
-                accum = accum!!.multiply(this, newPrecision)
+                accum = accum.multiply(this, newPrecision)
             }
             oneBitMask = oneBitMask shr 1
         }
@@ -1906,7 +1906,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             accum = ONE.divide(accum, newPrecision)
         }
         // The final value is rounded to the destination precision
-        accum!!.inplaceRound(mc)
+        accum.inplaceRound(mc)
         return accum
     }
 
@@ -2937,6 +2937,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     fun ulp(): BigDecimal {
         return valueOf(1, scale)
     }
+
     /* Private Methods */
     /**
      * It does all rounding work of the public method
