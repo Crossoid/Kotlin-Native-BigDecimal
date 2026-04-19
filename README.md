@@ -14,7 +14,7 @@ because binary packages are now available.
 
     val iosArm64Main by getting {
         dependencies {
-            implementation("com.crossoid:kotlin-native-bigdecimal:1.0")
+            implementation("com.crossoid:kotlin-native-bigdecimal:1.1.0")
         }
     }
 
@@ -29,6 +29,9 @@ Binary packages are provided via GitHub Packages, please see the
 for exact details how to import the library and how to use it. The following
 versions were released so far:
 
+* 1.1.0
+  - Fixed a serious memory leak
+  - Changed nullable BigDecimal? returns to non-null BigDecimal
 * 1.0.1
   - Added unary plus and unary minus for BigDecimal
 * 1.0

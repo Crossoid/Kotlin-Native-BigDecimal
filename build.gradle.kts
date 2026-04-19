@@ -1,7 +1,7 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 
 plugins {
-    kotlin("multiplatform") version "1.9.20"
+    kotlin("multiplatform") version "2.2.21"
     id("com.android.library")
     id("maven-publish")
 }
@@ -9,7 +9,7 @@ plugins {
 // For publishing; publish with:
 // ./gradlew publishAllPublicationsToGitHubPackagesRepository
 group = "com.crossoid"
-version = "1.0.1"
+version = "1.1.0"
 
 repositories {
     google()
@@ -20,6 +20,7 @@ kotlin {
     androidTarget() {
         publishLibraryVariants("release", "debug")
     }
+
     iosArm64() {
         binaries {
             framework {
@@ -30,23 +31,21 @@ kotlin {
         // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
         // The boringssl provides the BIGNUM implementation
         compilations["main"].cinterops {
-            compilations["main"].cinterops {
-                val boringssl by creating {
-                    // Def-file describing the native API.
-                    defFile(project.file("./bignum/ios/boringssl.def"))
+            val boringssl by creating {
+                // Def-file describing the native API.
+                defFile(project.file("./bignum/ios/boringssl.def"))
 
-                    // Package to place the Kotlin API generated.
-                    packageName("boringssl")
+                // Package to place the Kotlin API generated.
+                packageName("boringssl")
 
-                    // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
+                // Options to be passed to compiler by cinterop tool.
+                compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
 
-                    // Directories for header search (an analogue of the -I<path> compiler option).
-                    //includeDirs.allHeaders("path1", "path2")
+                // Directories for header search (an analogue of the -I<path> compiler option).
+                //includeDirs.allHeaders("path1", "path2")
 
-                    // A shortcut for includeDirs.allHeaders.
-                    //includeDirs("include/directory", "another/directory")
-                }
+                // A shortcut for includeDirs.allHeaders.
+                //includeDirs("include/directory", "another/directory")
             }
         }
     }
@@ -60,23 +59,21 @@ kotlin {
         // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
         // The boringssl provides the BIGNUM implementation
         compilations["main"].cinterops {
-            compilations["main"].cinterops {
-                val boringssl by creating {
-                    // Def-file describing the native API.
-                    defFile(project.file("./bignum/ios/boringssl-simulator.def"))
+            val boringssl by creating {
+                // Def-file describing the native API.
+                defFile(project.file("./bignum/ios/boringssl-simulator.def"))
 
-                    // Package to place the Kotlin API generated.
-                    packageName("boringssl")
+                // Package to place the Kotlin API generated.
+                packageName("boringssl")
 
-                    // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64-simulator/crypto -L./bignum/ios/boringssl/build-arm64-simulator/ssl")
+                // Options to be passed to compiler by cinterop tool.
+                compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64-simulator/crypto -L./bignum/ios/boringssl/build-arm64-simulator/ssl")
 
-                    // Directories for header search (an analogue of the -I<path> compiler option).
-                    //includeDirs.allHeaders("path1", "path2")
+                // Directories for header search (an analogue of the -I<path> compiler option).
+                //includeDirs.allHeaders("path1", "path2")
 
-                    // A shortcut for includeDirs.allHeaders.
-                    //includeDirs("include/directory", "another/directory")
-                }
+                // A shortcut for includeDirs.allHeaders.
+                //includeDirs("include/directory", "another/directory")
             }
         }
     }
@@ -87,15 +84,29 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
+
+        val commonMain by getting
+        val iosArm64Main by getting
+        val iosSimulatorArm64Main by getting
+
+        val iosMain by creating {
+            dependsOn(commonMain)
+            iosArm64Main.dependsOn(this)
+            iosSimulatorArm64Main.dependsOn(this)
+
+            kotlin.srcDir("src/iosMain/kotlin")
+        }
     }
 }
 
 android {
+    namespace = "com.crossoid.bigdecimal"
+
     compileOptions {
         sourceCompatibility(JavaVersion.VERSION_17)
         targetCompatibility(JavaVersion.VERSION_17)
     }
-    compileSdk = 34
+    compileSdk = 36
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 }
 
