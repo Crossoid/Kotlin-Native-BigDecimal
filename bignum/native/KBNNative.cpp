@@ -1,4 +1,4 @@
-#import "KBNNative.h"
+#include "KBNNative.h"
 
 #include <limits.h>
 #include <openssl/bn.h>

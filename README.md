@@ -1,9 +1,19 @@
-# Kotlin/Native BigDecimal (Kotlin Multiplatform for iOS)
+# Kotlin/Native BigDecimal (Kotlin Multiplatform for iOS, macOS, watchOS, tvOS and Linux)
 
 This is a drop-in replacement for java.math.BigDecimal.  If you have a
 Kotlin/JVM project, want to port it to Kotlin/Native iOS, but struggle because
 you are using java.math.BigDecimal and cannot find an implementation, this is
 the library you want to use.
+
+The following Kotlin/Native targets are supported:
+
+* iOS: `iosArm64`, `iosX64`, `iosSimulatorArm64`
+* macOS: `macosArm64`, `macosX64`
+* watchOS: `watchosArm64`, `watchosArm32`, `watchosDeviceArm64`, `watchosX64`,
+  `watchosSimulatorArm64` (for `watchosArm32`, only the klib is built - Xcode
+  14+ cannot link armv7k anymore)
+* tvOS: `tvosArm64`, `tvosX64`, `tvosSimulatorArm64`
+* Linux: `linuxX64`, `linuxArm64`
 
 The code is production-ready, optimized for performance, and used in the iOS port of [HiPER Scientific
 Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530).
@@ -79,34 +89,41 @@ I've tested this both with the iOS Simulator and a device.  To build, do:
 
   Clone BoringSSL into the expected source directory:
 
-        cd bignum/ios
+        git clone https://boringssl.googlesource.com/boringssl bignum/boringssl
 
-        git clone git@github.com:google/boringssl.git
-        cd boringssl
-        cd ../../..
+  BoringSSL (and the small native wrapper in bignum/native) is then built
+  automatically for every target that you build, into
+  bignum/boringssl/build-<target>. To cleanly configure and rebuild the
+  optimized libraries, run:
 
-  Then cleanly configure and rebuild optimized device and simulator libraries:
+        ./gradlew rebuildBoringSsl
 
-        ./gradlew rebuildIosBoringSsl
+  The task removes the CMake build directories, configures Release builds with
+  `-O3 -DNDEBUG` and builds the `crypto` static library. Use
+  `rebuildIosBoringSsl` for the iOS targets only, or `rebuild<Target>BoringSsl`
+  (e.g. `rebuildIosArm64BoringSsl`) when only one target is needed.
 
-  The task removes both CMake build directories, configures Release builds with
-  `-O3 -DNDEBUG` using the active Xcode SDKs, and builds the `crypto` and `ssl`
-  static libraries. Use `rebuildIosArm64BoringSsl` or
-  `rebuildIosSimulatorArm64BoringSsl` when only one target is needed.
+  Apple targets are built with the active Xcode SDKs, so they have to be built
+  on macOS. Linux targets are cross-compiled with the clang and the sysroot
+  that Kotlin/Native itself links with (downloaded automatically into
+  ~/.konan), so they can be built on macOS too.
 
 * Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
-  Simulator:
+  Run the compile task of the target you want, e.g.:
 
         ./gradlew compileKotlinIosSimulatorArm64
-
-	(resulting libraries are in: build/classes/kotlin/iosSimulatorArm64/main/)
-
-  Device:
-
         ./gradlew compileKotlinIosArm64
+        ./gradlew compileKotlinMacosArm64
+        ./gradlew compileKotlinLinuxX64
 
-	(resulting libraries are in: build/classes/kotlin/iosArm64/main/)
+	(resulting libraries are in: build/classes/kotlin/<target>/main/)
+
+* Run the tests
+
+  Run the test task of the target you want, e.g.:
+
+        ./gradlew macosArm64Test
 
 * Incorporate the resulting klibs into your project
 
@@ -140,9 +157,8 @@ are some ideas what to improve if you want to help:
 * The code builds with various warnings - I'll appreciate patches to fix
   those.
 
-* The build of BoringSSL has to be done manually - would be great to extend
-  the build.gradle.kts to clone / build it as part of the build just out of
-  the box, and for the correct platform.
+* The BoringSSL sources have to be cloned manually - would be great to extend
+  the build.gradle.kts to clone them as part of the build just out of the box.
 
 * Automate the build of the Kotlin/JVM part too - so that it can be used for
   Android development too if necessary for some reason.

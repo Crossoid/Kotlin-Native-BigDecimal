@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
 /.idea
 .DS_Store
@@ -9,4 +10,4 @@
 .cxx
 local.properties
 .*.sw*
-/bignum/ios/boringssl
+/bignum/boringssl

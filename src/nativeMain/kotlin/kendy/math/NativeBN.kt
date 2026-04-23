@@ -31,7 +31,7 @@ private fun releaseBignum(bignum: Long) {
  * Binding between the Kotlin BigDecimal and boringssl's BIGNUM.
  * https://kotlinlang.org/docs/native-c-interop.html
  */
-@OptIn(ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 actual internal object NativeBN {
     /**
      * Just throw if the BIGNUM handle is not correct.
@@ -184,7 +184,7 @@ actual internal object NativeBN {
         val retBN = toBigNum(ret)
         // "pin" the ByteArray to fix it in memory at a given place
         s?.usePinned { pinned ->
-            checkValid(boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.toULong(), retBN))
+            checkValid(boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.convert(), retBN))
         }
 
         boringssl.BN_set_negative(retBN, neg.toInt())
@@ -197,7 +197,7 @@ actual internal object NativeBN {
         val retBN = toBigNum(ret)
         // "pin" the IntArray to fix it in memory at a given place
         ints?.usePinned { pinned ->
-            checkValid(boringssl.BN_le2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.toULong() * 4UL /* sizeof Int */, retBN))
+            checkValid(boringssl.BN_le2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), (len.toLong() * 4 /* sizeof Int */).convert(), retBN))
         }
 
         boringssl.BN_set_negative(retBN, neg.toInt())
@@ -219,7 +219,7 @@ actual internal object NativeBN {
 
         // "pin" to fix it in memory at a given place
         s.usePinned { pinned ->
-            if (boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.toULong(), retBN) == null) {
+            if (boringssl.BN_bin2bn(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), len.convert(), retBN) == null) {
                 throw ArithmeticException("BN_bin2bn failed")
             }
         }
@@ -231,7 +231,7 @@ actual internal object NativeBN {
             // For negative values, BN_bin2bn doesn't interpret the twos-complement
             // representation, so ret is now (- value - 2^N). We can use nnmod_pow2 to set
             // ret to (-value).
-            if (boringssl.BN_nnmod_pow2(retBN, retBN, len.toULong() * 8U) == 0) {
+            if (boringssl.BN_nnmod_pow2(retBN, retBN, (len.toLong() * 8).convert()) == 0) {
                 throw ArithmeticException("BN_nnmod_pow2 failed")
             }
 
@@ -339,7 +339,7 @@ actual internal object NativeBN {
         // "pin" to fix it in memory at a given place
         result.usePinned { pinned ->
             // We can simply interpret a little-endian byte stream as a little-endian integer stream.
-            if (boringssl.BN_bn2le_padded(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), (intLen * intSize).toULong(), aBN) == 0) {
+            if (boringssl.BN_bn2le_padded(pinned.addressOf(0).reinterpret<UByteVarOf<UByte>>(), (intLen.toLong() * intSize).convert(), aBN) == 0) {
                 throw ArithmeticException("BN_bn2le_padded failed")
             }
         }
@@ -370,7 +370,7 @@ actual internal object NativeBN {
     actual fun bitLength(a: Long): Int {
         checkValid(a)
 
-        val result = boringssl.KBNBitLength(a.toULong())
+        val result = boringssl.KBNBitLength(a.convert())
         if (result == -1) {
             throw OutOfMemoryError("BN_CTX_new failed")
         }
@@ -412,7 +412,7 @@ actual internal object NativeBN {
     actual fun BN_add_word(a: Long, w: Int) {
         checkValid(a)
 
-        if (boringssl.BN_add_word(toBigNum(a), w.toULong()) == 0) {
+        if (boringssl.BN_add_word(toBigNum(a), w.convert()) == 0) {
             throw ArithmeticException("BN_add_word failed")
         }
     }
@@ -422,7 +422,7 @@ actual internal object NativeBN {
     actual fun BN_mul_word(a: Long, w: Int) {
         checkValid(a)
 
-        if (boringssl.BN_mul_word(toBigNum(a), w.toULong()) == 0) {
+        if (boringssl.BN_mul_word(toBigNum(a), w.convert()) == 0) {
             throw ArithmeticException("BN_mul_word failed")
         }
     }
@@ -432,8 +432,8 @@ actual internal object NativeBN {
     actual fun BN_mod_word(a: Long, w: Int): Int {
         checkValid(a)
 
-        val result = boringssl.BN_mod_word(toBigNum(a), w.toULong())
-        if (result == (-1).toULong()) {
+        val result = boringssl.BN_mod_word(toBigNum(a), w.convert())
+        if (result == (-1).convert<boringssl.BN_ULONG>()) {
             throw ArithmeticException("BN_mod_word failed")
         }
         return result.toInt()
@@ -467,7 +467,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        checkNativeResult(boringssl.KBNGcd(r.toULong(), a.toULong(), b.toULong()), "BN_gcd")
+        checkNativeResult(boringssl.KBNGcd(r.convert(), a.convert(), b.convert()), "BN_gcd")
     }
 
     // int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
@@ -476,7 +476,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        checkNativeResult(boringssl.KBNMultiply(r.toULong(), a.toULong(), b.toULong()), "BN_mul")
+        checkNativeResult(boringssl.KBNMultiply(r.convert(), a.convert(), b.convert()), "BN_mul")
     }
 
     // int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
@@ -485,7 +485,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(p)
 
-        checkNativeResult(boringssl.KBNExponentiate(r.toULong(), a.toULong(), p.toULong()), "BN_exp")
+        checkNativeResult(boringssl.KBNExponentiate(r.convert(), a.convert(), p.convert()), "BN_exp")
     }
 
     // int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
@@ -496,7 +496,7 @@ actual internal object NativeBN {
         checkValid(d)
 
         checkNativeResult(
-            boringssl.KBNDivide(dv.toULong(), rem.toULong(), m.toULong(), d.toULong()),
+            boringssl.KBNDivide(dv.convert(), rem.convert(), m.convert(), d.convert()),
             "BN_div"
         )
     }
@@ -506,9 +506,9 @@ actual internal object NativeBN {
         checkValid(m)
         checkValid(d)
         return when (val result = boringssl.KBNDivideWithRemainderComparison(
-            dv.toULong(),
-            m.toULong(),
-            d.toULong()
+            dv.convert(),
+            m.convert(),
+            d.convert()
         )) {
             0 -> Int.MIN_VALUE
             1 -> -1
@@ -526,7 +526,7 @@ actual internal object NativeBN {
         checkValid(m)
 
         checkNativeResult(
-            boringssl.KBNNonNegativeModulo(r.toULong(), a.toULong(), m.toULong()),
+            boringssl.KBNNonNegativeModulo(r.convert(), a.convert(), m.convert()),
             "BN_nnmod"
         )
     }
@@ -540,10 +540,10 @@ actual internal object NativeBN {
 
         checkNativeResult(
             boringssl.KBNModularExponentiation(
-                r.toULong(),
-                a.toULong(),
-                p.toULong(),
-                m.toULong()
+                r.convert(),
+                a.convert(),
+                p.convert(),
+                m.convert()
             ),
             "BN_mod_exp"
         )
@@ -556,7 +556,7 @@ actual internal object NativeBN {
         checkValid(n)
 
         checkNativeResult(
-            boringssl.KBNModularInverse(ret.toULong(), a.toULong(), n.toULong()),
+            boringssl.KBNModularInverse(ret.convert(), a.convert(), n.convert()),
             "BN_mod_inverse"
         )
     }
@@ -581,7 +581,7 @@ actual internal object NativeBN {
             val isProbablyPrime = alloc<IntVar>()
             checkNativeResult(
                 boringssl.KBNPrimalityTest(
-                    candidate.toULong(),
+                    candidate.convert(),
                     checks,
                     do_trial_division.toInt(),
                     isProbablyPrime.ptr

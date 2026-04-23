@@ -1,0 +1,3 @@
+headers = KBNNative.h openssl/crypto.h openssl/bn.h
+staticLibraries = libkbnnative.a libcrypto.a
+package = boringssl
