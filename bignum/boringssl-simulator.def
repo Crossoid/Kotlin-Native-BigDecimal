@@ -1,0 +1,13 @@
+headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
+
+compilerOpts.ios = -I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64-simulator/crypto -L./bignum/ios/boringssl/build-arm64-simulator/ssl
+compilerOpts.watchos = -I./bignum/watchos/boringssl/include -L./bignum/watchos/boringssl/build-arm64-simulator/crypto -L./bignum/watchos/boringssl/build-arm64-simulator/ssl
+compilerOpts.tvos = -I./bignum/tvos/boringssl/include -L./bignum/tvos/boringssl/build-arm64-simulator/crypto -L./bignum/tvos/boringssl/build-arm64-simulator/ssl
+
+staticLibraries = libcrypto.a libssl.a
+
+libraryPaths.ios = ./bignum/ios/boringssl/build-arm64-simulator/crypto ./bignum/ios/boringssl/build-arm64-simulator/ssl
+libraryPaths.watchos = ./bignum/watchos/boringssl/build-arm64-simulator/crypto ./bignum/watchos/boringssl/build-arm64-simulator/ssl
+libraryPaths.tvos = ./bignum/tvos/boringssl/build-arm64-simulator/crypto ./bignum/tvos/boringssl/build-arm64-simulator/ssl
+
+package = boringssl

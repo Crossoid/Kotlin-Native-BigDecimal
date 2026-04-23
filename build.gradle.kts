@@ -20,8 +20,21 @@ kotlin {
     androidTarget() {
         publishLibraryVariants("release", "debug")
     }
-    iosArm64() {
-        binaries {
+
+    listOf(
+        iosArm64(),
+        iosX64(),
+        macosArm64(),
+        macosX64(),
+        linuxX64(),
+        linuxArm64(),
+        watchosX64(),
+        watchosArm32(),
+        watchosArm64(),
+        tvosX64(),
+        tvosArm64()
+    ).forEach {
+        it.binaries {
             framework {
                 baseName = "library"
             }
@@ -29,29 +42,22 @@ kotlin {
         // Build a native interop from the boringssl library; details here:
         // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
         // The boringssl provides the BIGNUM implementation
-        compilations["main"].cinterops {
-            compilations["main"].cinterops {
+        it.compilations["main"].cinterops {
+            it.compilations["main"].cinterops {
                 val boringssl by creating {
                     // Def-file describing the native API.
-                    defFile(project.file("./bignum/ios/boringssl.def"))
-
-                    // Package to place the Kotlin API generated.
-                    packageName("boringssl")
-
-                    // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl")
-
-                    // Directories for header search (an analogue of the -I<path> compiler option).
-                    //includeDirs.allHeaders("path1", "path2")
-
-                    // A shortcut for includeDirs.allHeaders.
-                    //includeDirs("include/directory", "another/directory")
+                    defFile(project.file("./bignum/boringssl.def"))
                 }
             }
         }
     }
-    iosSimulatorArm64() {
-        binaries {
+
+    listOf(
+        iosSimulatorArm64(),
+        watchosSimulatorArm64(),
+        tvosSimulatorArm64()
+    ).forEach {
+        it.binaries {
             framework {
                 baseName = "library"
             }
@@ -59,27 +65,16 @@ kotlin {
         // Build a native interop from the boringssl library; details here:
         // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
         // The boringssl provides the BIGNUM implementation
-        compilations["main"].cinterops {
-            compilations["main"].cinterops {
+        it.compilations["main"].cinterops {
+            it.compilations["main"].cinterops {
                 val boringssl by creating {
                     // Def-file describing the native API.
-                    defFile(project.file("./bignum/ios/boringssl-simulator.def"))
-
-                    // Package to place the Kotlin API generated.
-                    packageName("boringssl")
-
-                    // Options to be passed to compiler by cinterop tool.
-                    compilerOpts("-I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64-simulator/crypto -L./bignum/ios/boringssl/build-arm64-simulator/ssl")
-
-                    // Directories for header search (an analogue of the -I<path> compiler option).
-                    //includeDirs.allHeaders("path1", "path2")
-
-                    // A shortcut for includeDirs.allHeaders.
-                    //includeDirs("include/directory", "another/directory")
+                    defFile(project.file("./bignum/boringssl-simulator.def"))
                 }
             }
         }
     }
+
     sourceSets {
         val commonTest by getting {
             dependencies {
