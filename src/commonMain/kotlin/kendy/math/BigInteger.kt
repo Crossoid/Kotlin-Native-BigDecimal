@@ -1295,4 +1295,34 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             bi.setJavaRepresentation(sign, numberLength, digits)
         }
     }
+
+    /**
+     * Implements the `+` for convenience in Kotlin.
+     */
+    inline operator fun plus(value: BigInteger) = this.add(value)
+
+    /**
+     * Implements the `-` for convenience in Kotlin
+     */
+    inline operator fun minus(value: BigInteger) = this.subtract(value)
+
+    /**
+     * Implements the `*` for convenience in Kotlin
+     */
+    inline operator fun times(value: BigInteger) = this.multiply(value)
+
+    /**
+     * Implements the `/` for convenience in Kotlin
+     */
+    inline operator fun div(value: BigInteger) = this.divide(value)
+
+    /**
+     * Implements the -value for convenience
+     */
+    inline operator fun unaryMinus(): BigInteger = BigInteger.ZERO.minus(this)
+
+    /**
+     * Implements the +value for convenience
+     */
+    inline operator fun unaryPlus(): BigInteger = this
 }
