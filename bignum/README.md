@@ -1,10 +1,10 @@
 BigDecimal depends on the 'bignum' native implementation from the Google's
 BoringSSL package.  The library can be built both for JNI (Java Native
-Interface) for Android, and as a static library for iOS.
+Interface) for Android, and as a static library for Kotlin/Native (iOS, macOS, watchOS, tvOS and Linux).
 
 The JNI approach is only experimental, mostly for testing, because in a real
 app, you'll probably prefer the java.math.BigDecimal; most probably only the
-iOS port is interesting for you, so follow the 'iOS' parts of the following.
+iOS port is interesting for you, so follow the Kotlin/Native parts of the following.
 
 To build the 'nativebn' lib for the Kendy's BigDecimal port:
 
@@ -17,27 +17,36 @@ To be able to build BoringSSL, you need to install the following:
 
 # Build BoringSSL
 
-Change dir to 'ios' (or to 'jni' - if you want to build the JNI version).
+For Kotlin/Native, clone BoringSSL into 'boringssl' (for JNI, see below):
 
-    cd ios
-
-    git clone git@github.com:google/boringssl.git
-    cd boringssl
-    cd ../../..
+    git clone https://boringssl.googlesource.com/boringssl
 
 # Configure & build BoringSSL
 
-Cleanly configure and rebuild optimized device and simulator libraries with:
+Gradle builds BoringSSL automatically for every Kotlin/Native target that is
+built, into boringssl/build-<target>. Cleanly configure and rebuild optimized
+libraries for all the targets with:
 
-    ./gradlew rebuildIosBoringSsl
+    ./gradlew rebuildBoringSsl
 
-The task removes both CMake build directories, configures Release builds with
-`-O3 -DNDEBUG` using the active Xcode SDKs, and builds only the `crypto` and
-`ssl` static libraries. For one target, use `rebuildIosArm64BoringSsl` or
-`rebuildIosSimulatorArm64BoringSsl`.
+The task removes the CMake build directories, configures Release builds with
+`-O3 -DNDEBUG` and builds only the `crypto` static library. Use
+`rebuildIosBoringSsl` for the iOS targets only, or `rebuild<Target>BoringSsl`
+(e.g. `rebuildIosArm64BoringSsl`) for one target.
 
-* For JNI (only for testing):
+The Apple targets are built with the active Xcode SDKs. The Linux targets are
+cross-compiled with the clang and the sysroot that Kotlin/Native itself uses
+for linking (the sysroot has an old glibc, so that the resulting binaries run
+on older distributions too; a libcrypto.a built against the glibc of a recent
+distribution would fail to link). Gradle downloads that toolchain into
+~/.konan/dependencies when it is missing.
 
+The small C++ wrapper in 'native' (KBNNative), which runs some BIGNUM
+operations with a reused per-thread BN_CTX, is compiled the same way.
+
+For JNI (only for testing), change dir to 'jni', clone BoringSSL there and:
+
+        mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -GNinja ..
         ninja
 
@@ -50,7 +59,7 @@ The following is only for the case you'd like to build the klib by hand or if
 you wanted to build Java version of the lib (but you don't have to, in the
 Kotlin/JVM, you can use the java.math.BigDecimal right away.
 
-## Manual build of the native library - iOS
+## Manual build of the native library - Kotlin/Native
 
 If you are interested in details, check the following:
 
@@ -59,9 +68,11 @@ If you are interested in details, check the following:
 
 The actual build:
 
-    cd ../..
-
-    ~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/cinterop -def boringssl.def -o boringssl
+    ~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/cinterop -def boringssl.def -o boringssl \
+        -target ios_arm64 \
+        -compiler-option -Inative -compiler-option -Iboringssl/include \
+        -libraryPath ../build/native/iosArm64 \
+        -libraryPath boringssl/build-iosArm64
 
     ~/.konan/kotlin-native-prebuilt-macos-1.4.30-M1/bin/klib install boringssl.klib
 
