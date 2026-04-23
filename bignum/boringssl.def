@@ -1,0 +1,37 @@
+headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
+
+compilerOpts.ios_arm64 = -I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-arm64/crypto -L./bignum/ios/boringssl/build-arm64/ssl
+compilerOpts.ios_x64 = -I./bignum/ios/boringssl/include -L./bignum/ios/boringssl/build-x64/crypto -L./bignum/ios/boringssl/build-arm64/ssl
+
+compilerOpts.macos_arm64 = -I./bignum/macos/boringssl/include -L./bignum/macos/boringssl/build-arm64/crypto -L./bignum/macos/boringssl/build-arm64/ssl
+compilerOpts.macos_x64 = -I./bignum/macos/boringssl/include -L./bignum/macos/boringssl/build-x64/crypto -L./bignum/macos/boringssl/build-x64/ssl
+
+compilerOpts.linux_x64 = -I./bignum/linux/boringssl/include -L./bignum/linux/boringssl/build-x64/crypto -L./bignum/linux/boringssl/build-x64/ssl
+compilerOpts.linux_arm64 = -I./bignum/linux/boringssl/include -L./bignum/linux/boringssl/build-arm64/crypto -L./bignum/linux/boringssl/build-arm64/ssl
+
+compilerOpts.watchos_x64 = -I./bignum/watchos/boringssl/include -L./bignum/watchos/boringssl/build-x64/crypto -L./bignum/watchos/boringssl/build-x64/ssl
+compilerOpts.watchos_arm32 = -I./bignum/watchos/boringssl/include -L./bignum/watchos/boringssl/build-arm32/crypto -L./bignum/watchos/boringssl/build-arm32/ssl
+compilerOpts.watchos_arm64 = -I./bignum/watchos/boringssl/include -L./bignum/watchos/boringssl/build-arm64/crypto -L./bignum/watchos/boringssl/build-arm64/ssl
+
+compilerOpts.tvos_x64 = -I./bignum/tvos/boringssl/include -L./bignum/tvos/boringssl/build-x64/crypto -L./bignum/tvos/boringssl/build-x64/ssl
+compilerOpts.tvos_arm64 = -I./bignum/tvos/boringssl/include -L./bignum/tvos/boringssl/build-arm64/crypto -L./bignum/tvos/boringssl/build-arm64/ssl
+
+staticLibraries = libcrypto.a libssl.a
+
+libraryPaths.ios_arm64 = ./bignum/ios/boringssl/build-arm64/crypto ./bignum/ios/boringssl/build-arm64/ssl
+libraryPaths.ios_x64 = ./bignum/ios/boringssl/build-x64/crypto ./bignum/ios/boringssl/build-x64/ssl
+
+libraryPaths.macos_arm64 = ./bignum/macos/boringssl/build-arm64/crypto ./bignum/macos/boringssl/build-arm64/ssl
+libraryPaths.macos_x64 = ./bignum/macos/boringssl/build-x64/crypto ./bignum/macos/boringssl/build-x64/ssl
+
+libraryPaths.linux_x64 = ./bignum/linux/boringssl/build-x64/crypto ./bignum/linux/boringssl/build-x64/ssl
+libraryPaths.linux_arm64 = ./bignum/linux/boringssl/build-arm64/crypto ./bignum/linux/boringssl/build-arm64/ssl
+
+libraryPaths.watchos_x64 = ./bignum/watchos/boringssl/build-x64/crypto ./bignum/watchos/boringssl/build-x64/ssl
+libraryPaths.watchos_arm32 = ./bignum/watchos/boringssl/build-arm32/crypto ./bignum/watchos/boringssl/build-arm32/ssl
+libraryPaths.watchos_arm64 = ./bignum/watchos/boringssl/build-arm64/crypto ./bignum/watchos/boringssl/build-arm64/ssl
+
+libraryPaths.tvos_x64 = ./bignum/tvos/boringssl/build-x64/crypto ./bignum/tvos/boringssl/build-x64/ssl
+libraryPaths.tvos_arm64 = ./bignum/tvos/boringssl/build-arm64/crypto ./bignum/tvos/boringssl/build-arm64/ssl
+
+package = boringssl
