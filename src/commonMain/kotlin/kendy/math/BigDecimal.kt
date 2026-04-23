@@ -1240,7 +1240,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `roundingMode == ROUND_UNNECESSARY` and rounding is
      * necessary according to the given scale.
      */
-    fun divide(divisor: BigDecimal, scale: Int, roundingMode: Int): BigDecimal? {
+    fun divide(divisor: BigDecimal, scale: Int, roundingMode: Int): BigDecimal {
         return divide(divisor, scale, RoundingMode.valueOf(roundingMode))
     }
 
@@ -1267,7 +1267,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * rounding is necessary according to the given scale and given
      * precision.
      */
-    fun divide(divisor: BigDecimal, scale: Int, roundingMode: RoundingMode?): BigDecimal? {
+    fun divide(divisor: BigDecimal, scale: Int, roundingMode: RoundingMode?): BigDecimal {
         // Let be: this = [u1,s1]  and  divisor = [u2,s2]
         if (roundingMode == null) {
             throw NullPointerException("roundingMode == null")
@@ -1356,7 +1356,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `roundingMode == ROUND_UNNECESSARY` and rounding is
      * necessary according to the scale of this.
      */
-    fun divide(divisor: BigDecimal, roundingMode: Int): BigDecimal? {
+    fun divide(divisor: BigDecimal, roundingMode: Int): BigDecimal {
         return divide(divisor, scale, RoundingMode.valueOf(roundingMode))
     }
 
@@ -1380,7 +1380,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `roundingMode == RoundingMode.UNNECESSARY` and
      * rounding is necessary according to the scale of this.
      */
-    fun divide(divisor: BigDecimal, roundingMode: RoundingMode?): BigDecimal? {
+    fun divide(divisor: BigDecimal, roundingMode: RoundingMode?): BigDecimal {
         return divide(divisor, scale, roundingMode)
     }
 
@@ -1867,7 +1867,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws ArithmeticException
      * if `n < 0` or `n > 999999999`.
      */
-    fun pow(n: Int, mc: kendy.math.MathContext): BigDecimal? {
+    fun pow(n: Int, mc: kendy.math.MathContext): BigDecimal {
         // The ANSI standard X3.274-1996 algorithm
         val m: Int = abs(n)
         val mcPrecision: Int = mc.precision
@@ -2181,7 +2181,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `roundingMode == ROUND_UNNECESSARY` and rounding is
      * necessary according to the given scale.
      */
-    fun setScale(newScale: Int, roundingMode: Int): BigDecimal? {
+    fun setScale(newScale: Int, roundingMode: Int): BigDecimal {
         return setScale(newScale, RoundingMode.valueOf(roundingMode))
     }
 
@@ -2201,7 +2201,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * @throws ArithmeticException
      * if rounding would be necessary.
      */
-    fun setScale(newScale: Int): BigDecimal? {
+    fun setScale(newScale: Int): BigDecimal {
         return setScale(newScale, RoundingMode.UNNECESSARY)
     }
 
@@ -2219,11 +2219,11 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * Note, that `movePointLeft(0)` returns a result which is
      * mathematically equivalent, but which has `scale >= 0`.
      */
-    fun movePointLeft(n: Int): BigDecimal? {
+    fun movePointLeft(n: Int): BigDecimal {
         return movePoint(scale + n.toLong())
     }
 
-    private fun movePoint(newScale: Long): BigDecimal? {
+    private fun movePoint(newScale: Long): BigDecimal {
         if (isZero) {
             return zeroScaledBy(max(newScale, 0))
         }
@@ -2260,7 +2260,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * Note, that `movePointRight(0)` returns a result which is
      * mathematically equivalent, but which has scale >= 0.
      */
-    fun movePointRight(n: Int): BigDecimal? {
+    fun movePointRight(n: Int): BigDecimal {
         return movePoint(scale - n.toLong())
     }
 
@@ -2934,7 +2934,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      *
      * @return unit in the last place (ULP) of this `BigDecimal` instance.
      */
-    fun ulp(): BigDecimal? {
+    fun ulp(): BigDecimal {
         return valueOf(1, scale)
     }
     /* Private Methods */
