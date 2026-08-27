@@ -14,7 +14,7 @@ because binary packages are now available.
 
     val iosArm64Main by getting {
         dependencies {
-            implementation("com.crossoid:kotlin-native-bigdecimal:1.1.1")
+            implementation("com.crossoid:kotlin-native-bigdecimal:1.2.0")
         }
     }
 
@@ -29,6 +29,13 @@ Binary packages are provided via GitHub Packages, please see the
 for exact details how to import the library and how to use it. The following
 versions were released so far:
 
+* 1.2.0
+  - Prevented iOS memory exhaustion by deterministically releasing temporary
+    BIGNUM values used by division, rounding, multiplication, and scaled arithmetic
+  - Reduced allocations in BigDecimal division, rounding, precision calculation,
+    trailing-zero stripping, scale alignment, and comparison hot paths
+  - Added regression coverage for large values, signs, rounding boundaries, and
+    scoped native ownership
 * 1.1.1
   - Fixed leaking the native BIGNUM owned by every BigInt on iOS
   - Restored safe BigInteger parsing and formatting for radices 2 through 36
