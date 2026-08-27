@@ -258,14 +258,13 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                     thisValue.scale
                 )
             } else {
-                val bi: BigInt =
-                        kendy.math.Multiplication.multiplyByTenPow(
-                                augend.unscaledValue,
-                                diffScale.toLong()
-                        )
-                                .getBigInt()!!
-                bi.add(thisValue.unscaledValue!!.getBigInt()!!)
-                BigDecimal(BigInteger(bi), thisValue.scale)
+                val powerOfTen = kendy.math.Multiplication.powerOf10(diffScale.toLong())
+                augend.unscaledValue.withScopedProduct(powerOfTen) { scaledAugend ->
+                    scaledAugend.addInPlace(thisValue.unscaledValue)
+                    val result = BigDecimal(scaledAugend, thisValue.scale)
+                    scaledAugend.promoteScopedNativeAllocation()
+                    result
+                }
             }
         }
 
@@ -2311,7 +2310,15 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
     fun stripTrailingZeros(): BigDecimal {
         var newScale = scale.toLong()
         if (isZero) {
-            return BigDecimal(BigInteger.ZERO, 0)
+            return ZERO
+        }
+        if (bitLength < 64) {
+            var stripped = smallValue
+            while (stripped % 10L == 0L) {
+                stripped /= 10L
+                newScale--
+            }
+            return valueOf(stripped, safeLongToInt(newScale))
         }
         var strippedBI = unscaledValue!!
 

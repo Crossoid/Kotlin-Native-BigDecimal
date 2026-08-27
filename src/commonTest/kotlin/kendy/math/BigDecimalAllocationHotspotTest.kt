@@ -48,6 +48,33 @@ class BigDecimalAllocationHotspotTest {
     }
 
     @Test
+    fun stripTrailingZerosKeepsSmallValuesAndSignsExact() {
+        assertStripped(BigInteger("12345"), 2, BigDecimal.valueOf(123450000L, 6).stripTrailingZeros())
+        assertStripped(
+            BigInteger.valueOf(-9),
+            -11,
+            BigDecimal.valueOf(-9_000_000_000_000_000_000L, 7).stripTrailingZeros(),
+        )
+        assertStripped(BigInteger.ZERO, 0, BigDecimal.valueOf(0L, Int.MIN_VALUE).stripTrailingZeros())
+    }
+
+    @Test
+    fun scaleAlignedAdditionKeepsTheScopedNativeResultAlive() {
+        val fineUnscaled = BigInteger("123456789012345678901234567890")
+        val coarseUnscaled = BigInteger("-98765432109876543210")
+        val fine = BigDecimal(fineUnscaled, 20)
+        val coarse = BigDecimal(coarseUnscaled, 5)
+        val expected = BigDecimal(
+            fineUnscaled.add(coarseUnscaled.multiply(BigInteger.TEN.pow(15))),
+            20,
+        )
+
+        assertEquals(expected, fine.add(coarse))
+        assertEquals(expected, coarse.add(fine))
+        assertEquals(expected.toPlainString(), fine.add(coarse).toPlainString())
+    }
+
+    @Test
     fun roundsWithSingleWordRemainderForPositiveAndNegativeValues() {
         val context = MathContext(11, RoundingMode.HALF_EVEN)
 
