@@ -2038,10 +2038,9 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         } else {
             var decimalDigits = 1 + ((bitLength - 1) * LOG10_2).toInt()
             val value = unscaledValue!!
-            val magnitude = if (value.signum() < 0) value.abs() else value
             // The bit-length estimate is either exact or one digit short.
-            // Comparing avoids allocating a quotient and running BN_div.
-            if (magnitude.compareTo(kendy.math.Multiplication.powerOf10ForPrecision(decimalDigits)) >= 0) {
+            // The unsigned comparison avoids both a quotient and an abs() copy.
+            if (value.compareMagnitude(kendy.math.Multiplication.powerOf10ForPrecision(decimalDigits)) >= 0) {
                 decimalDigits++
             }
             decimalDigits

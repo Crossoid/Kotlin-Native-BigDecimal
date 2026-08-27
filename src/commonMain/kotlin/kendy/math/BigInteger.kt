@@ -805,6 +805,10 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         return BigInt.cmp(getBigInt()!!, value!!.getBigInt()!!)
     }
 
+    internal fun compareMagnitude(value: BigInteger): Int {
+        return BigInt.ucmp(getBigInt()!!, value.getBigInt()!!)
+    }
+
     /**
      * Returns the minimum of this `BigInteger` and `value`.
      *

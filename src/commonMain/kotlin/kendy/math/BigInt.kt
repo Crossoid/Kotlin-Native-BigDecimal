@@ -282,6 +282,11 @@ class BigInt {
             return kendy.math.NativeBN.BN_cmp(a.bignum, b.bignum)
         }
 
+        @JvmStatic
+        fun ucmp(a: BigInt, b: BigInt): Int {
+            return kendy.math.NativeBN.BN_ucmp(a.bignum, b.bignum)
+        }
+
         // Java supports non-ASCII decimal digits, but OpenSSL doesn't.
         // We need to translate the decimal digits but leave any other characters alone.
         // This method assumes it's being called on a string that has already been validated.

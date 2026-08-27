@@ -33,6 +33,14 @@ JNIEXPORT jint JNICALL Java_kendy_math_NativeBN_BN_1cmp
 
 /*
  * Class:     kendy_math_NativeBN
+ * Method:    BN_ucmp
+ * Signature: (JJ)I
+ */
+JNIEXPORT jint JNICALL Java_kendy_math_NativeBN_BN_1ucmp
+  (JNIEnv *, jobject, jlong, jlong);
+
+/*
+ * Class:     kendy_math_NativeBN
  * Method:    BN_copy
  * Signature: (JJ)V
  */

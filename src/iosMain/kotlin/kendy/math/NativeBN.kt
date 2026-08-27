@@ -148,6 +148,11 @@ actual internal object NativeBN {
         return boringssl.BN_cmp(toBigNum(a), toBigNum(b))
     }
 
+    // int BN_ucmp(const BIGNUM *a, const BIGNUM *b);
+    actual fun BN_ucmp(a: Long, b: Long): Int {
+        return boringssl.BN_ucmp(toBigNum(a), toBigNum(b))
+    }
+
     // BIGNUM *BN_copy(BIGNUM *to, const BIGNUM *from);
     actual fun BN_copy(to: Long, from: Long) {
         checkValid(boringssl.BN_copy(toBigNum(to), toBigNum(from)))

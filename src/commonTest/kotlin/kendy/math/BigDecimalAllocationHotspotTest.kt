@@ -8,11 +8,26 @@ class BigDecimalAllocationHotspotTest {
     @Test
     fun precisionIsExactAroundLargePowersOfTen() {
         val tenTo1000 = BigInteger.TEN.pow(1000)
+        val below = tenTo1000.subtract(BigInteger.ONE)
+        val above = tenTo1000.add(BigInteger.ONE)
 
-        assertEquals(1000, BigDecimal(tenTo1000.subtract(BigInteger.ONE)).precision())
+        assertEquals(1000, BigDecimal(below).precision())
+        assertEquals(1000, BigDecimal(below.negate()).precision())
         assertEquals(1001, BigDecimal(tenTo1000).precision())
         assertEquals(1001, BigDecimal(tenTo1000.negate()).precision())
-        assertEquals(1001, BigDecimal(tenTo1000.add(BigInteger.ONE)).precision())
+        assertEquals(1001, BigDecimal(above).precision())
+        assertEquals(1001, BigDecimal(above.negate()).precision())
+    }
+
+    @Test
+    fun magnitudeComparisonIgnoresBothOperandSigns() {
+        val smaller = BigInteger.TEN.pow(500).subtract(BigInteger.ONE)
+        val larger = BigInteger.TEN.pow(500)
+
+        assertEquals(-1, smaller.compareMagnitude(larger))
+        assertEquals(-1, smaller.negate().compareMagnitude(larger.negate()))
+        assertEquals(0, larger.negate().compareMagnitude(larger))
+        assertEquals(1, larger.compareMagnitude(smaller.negate()))
     }
 
     @Test

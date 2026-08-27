@@ -159,6 +159,11 @@ extern "C" JNIEXPORT int JNICALL Java_kendy_math_NativeBN_BN_1cmp(JNIEnv* env, j
   return BN_cmp(toBigNum(a), toBigNum(b));
 }
 
+extern "C" JNIEXPORT int JNICALL Java_kendy_math_NativeBN_BN_1ucmp(JNIEnv* env, jobject, jlong a, jlong b) {
+  if (!twoValidHandles(env, a, b)) return 1;
+  return BN_ucmp(toBigNum(a), toBigNum(b));
+}
+
 extern "C" JNIEXPORT void JNICALL Java_kendy_math_NativeBN_BN_1copy(JNIEnv* env, jobject, jlong to, jlong from) {
   if (!twoValidHandles(env, to, from)) return;
   if (!BN_copy(toBigNum(to), toBigNum(from))) {

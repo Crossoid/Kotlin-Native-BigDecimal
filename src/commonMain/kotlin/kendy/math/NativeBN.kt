@@ -24,6 +24,9 @@ expect internal object NativeBN {
 
     fun BN_cmp(a: Long, b: Long): Int
 
+    /** Compares the absolute values of [a] and [b] without copying either operand. */
+    fun BN_ucmp(a: Long, b: Long): Int
+
     fun BN_copy(to: Long, from: Long)
 
     fun putLongInt(a: Long, dw: Long)

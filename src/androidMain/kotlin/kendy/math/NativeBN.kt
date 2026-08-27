@@ -37,6 +37,9 @@ actual internal object NativeBN {
     actual external fun BN_cmp(a: Long, b: Long): Int
 
     // int BN_cmp(const BIGNUM *a, const BIGNUM *b);
+    actual external fun BN_ucmp(a: Long, b: Long): Int
+
+    // int BN_ucmp(const BIGNUM *a, const BIGNUM *b);
     actual external fun BN_copy(to: Long, from: Long)
 
     // BIGNUM *BN_copy(BIGNUM *to, const BIGNUM *from);
