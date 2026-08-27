@@ -921,6 +921,10 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         getBigInt()!!.addToScoped(value.getBigInt()!!)
     }
 
+    internal fun replaceScopedValue(value: BigInteger) {
+        getBigInt()!!.replaceScopedValue(value.getBigInt()!!)
+    }
+
     /**
      * Returns a `BigInteger` whose value is `pow(this, exp)`.
      *
@@ -981,6 +985,20 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         val quotient = BigInteger(scoped)
         try {
             return block(quotient, comparison)
+        } finally {
+            scoped.releaseScopedNativeAllocation()
+        }
+    }
+
+    /** Divides using a quotient that is always released when [block] exits. */
+    internal fun <T> withScopedQuotient(
+        divisor: BigInteger,
+        block: (quotient: BigInteger) -> T
+    ): T {
+        val scoped = BigInt.scopedQuotient(getBigInt()!!, divisor.getBigInt()!!)
+        val quotient = BigInteger(scoped)
+        try {
+            return block(quotient)
         } finally {
             scoped.releaseScopedNativeAllocation()
         }

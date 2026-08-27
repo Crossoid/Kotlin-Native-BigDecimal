@@ -92,6 +92,11 @@ class BigInt {
         add(value)
     }
 
+    internal fun replaceScopedValue(value: BigInt) {
+        check(scopedNativeAllocation) { "BigInt is not scoped" }
+        NativeBN.BN_copy(bignum, value.bignum)
+    }
+
     fun putCopy(from: BigInt) {
         makeValid()
         NativeBN.BN_copy(bignum, from.bignum)
@@ -412,6 +417,17 @@ class BigInt {
                     divisor.bignum
                 )
                 return quotient to comparison
+            } catch (error: Throwable) {
+                quotient.releaseScopedNativeAllocation()
+                throw error
+            }
+        }
+
+        internal fun scopedQuotient(dividend: BigInt, divisor: BigInt): BigInt {
+            val quotient = newScopedBigInt()
+            try {
+                NativeBN.BN_div(quotient.bignum, 0, dividend.bignum, divisor.bignum)
+                return quotient
             } catch (error: Throwable) {
                 quotient.releaseScopedNativeAllocation()
                 throw error

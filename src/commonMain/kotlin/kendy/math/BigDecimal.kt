@@ -1511,15 +1511,23 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             } else {
                 // To strip trailing zeros until the preferred scale is reached
                 while (!integerQuot.testBit(0)) {
-                    val stripped = integerQuot.divideAndCompareRemainder(TEN_POW[i]!!)
-                    if (stripped.isExact
-                        && newScale - i >= diffScale
-                    ) {
+                    var strippedExactly = false
+                    integerQuot.withScopedDivisionAndRemainderComparison(TEN_POW[i]!!) {
+                        candidate, candidateRemainderComparison ->
+                        if (candidateRemainderComparison == ZERO_REMAINDER
+                            && newScale - i >= diffScale
+                        ) {
+                            // Keep the original quotient's lexical ownership
+                            // across iterations; the candidate is always freed.
+                            scopedQuotient.replaceScopedValue(candidate)
+                            strippedExactly = true
+                        }
+                    }
+                    if (strippedExactly) {
                         newScale -= i.toLong()
                         if (i < lastPow) {
                             i++
                         }
-                        integerQuot = stripped.quotient
                     } else {
                         if (i == 1) {
                             break
@@ -2972,53 +2980,73 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         }
         // Getting the integer part and the discarded fraction
         val value = unscaledValue!!
-        var integer: BigInteger
-        var fractionSign = 0
-        var fractionComparison = 0
+        val newScale = scale.toLong() - discardedPrecision
         if (discardedPrecision < kendy.math.Multiplication.tenPows.size) {
             // BN_mod_word returns the magnitude of this remainder without
             // allocating a temporary BIGNUM. This is the common rounding path.
             val fractionDivisor = kendy.math.Multiplication.tenPows[discardedPrecision]
             val fractionMagnitude = value.remainderByPositiveInt(fractionDivisor)
-            integer = value.divide(TEN_POW[discardedPrecision])
-            if (fractionMagnitude != 0) {
-                fractionSign = value.signum()
-                fractionComparison = (fractionMagnitude * 2).compareTo(fractionDivisor)
+            value.withScopedQuotient(TEN_POW[discardedPrecision]) { integer ->
+                completeScopedRound(
+                    integer,
+                    if (fractionMagnitude == 0) 0 else value.signum(),
+                    (fractionMagnitude * 2).compareTo(fractionDivisor),
+                    newScale,
+                    mcPrecision,
+                    mc.roundingMode!!,
+                )
             }
         } else {
             val sizeOfFraction = kendy.math.Multiplication.powerOf10(discardedPrecision.toLong())
-            val division = value.divideAndCompareRemainder(sizeOfFraction)
-            integer = division.quotient
-            if (!division.isExact) {
-                fractionSign = value.signum()
-                fractionComparison = division.remainderComparison
+            value.withScopedDivisionAndRemainderComparison(sizeOfFraction) {
+                integer, remainderComparison ->
+                completeScopedRound(
+                    integer,
+                    if (remainderComparison == ZERO_REMAINDER) 0 else value.signum(),
+                    remainderComparison,
+                    newScale,
+                    mcPrecision,
+                    mc.roundingMode!!,
+                )
             }
         }
-        var newScale = scale.toLong() - discardedPrecision
-        var compRem: Int
-        val tempBD: BigDecimal
-        // If the discarded fraction is non-zero, perform rounding
+    }
+
+    /** Finishes rounding while [integer] is still under lexical native ownership. */
+    private fun completeScopedRound(
+        integer: BigInteger,
+        fractionSign: Int,
+        fractionComparison: Int,
+        newScale: Long,
+        mcPrecision: Int,
+        roundingMode: RoundingMode,
+    ) {
         if (fractionSign != 0) {
             // To look if there is a carry
-            compRem = roundingBehavior(
+            val compRem = roundingBehavior(
                 if (integer.testBit(0)) 1 else 0,
                 fractionSign * (5 + fractionComparison),
-                mc.roundingMode!!
+                roundingMode,
             )
             if (compRem != 0) {
-                integer = integer.add(BigInteger.valueOf(compRem.toLong()))
+                integer.addInPlace(BigInteger.valueOf(compRem.toLong()))
             }
-            tempBD = BigDecimal(integer)
             // If after to add the increment the precision changed, we normalize the size
-            if (tempBD.precision() > mcPrecision) {
-                integer = integer.divide(BigInteger.TEN)
-                newScale--
+            if (BigDecimal(integer).precision() > mcPrecision) {
+                integer.withScopedQuotient(BigInteger.TEN) { normalized ->
+                    storeScopedRoundedValue(normalized, newScale - 1, mcPrecision)
+                }
+                return
             }
         }
-        // To update all internal fields
+        storeScopedRoundedValue(integer, newScale, mcPrecision)
+    }
+
+    private fun storeScopedRoundedValue(integer: BigInteger, newScale: Long, mcPrecision: Int) {
         scale = safeLongToInt(newScale)
         precision = mcPrecision
         unscaledValue = integer
+        integer.promoteScopedNativeAllocation()
     }
 
     /**

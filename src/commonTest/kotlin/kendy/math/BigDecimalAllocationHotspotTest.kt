@@ -101,6 +101,12 @@ class BigDecimalAllocationHotspotTest {
         val context = MathContext(11, RoundingMode.HALF_EVEN)
 
         assertRounded(
+            BigInteger("12345678901"),
+            -19,
+            BigInteger("123456789010000000000000000000"),
+            context,
+        )
+        assertRounded(
             BigInteger("12345678902"),
             -19,
             BigInteger("123456789015000000000000000000"),
@@ -111,6 +117,12 @@ class BigDecimalAllocationHotspotTest {
             -19,
             BigInteger("-123456789015000000000000000000"),
             context,
+        )
+        assertRounded(
+            BigInteger("-10000000000"),
+            -20,
+            BigInteger("-999999999995000000000000000000"),
+            MathContext(11, RoundingMode.HALF_UP),
         )
     }
 
