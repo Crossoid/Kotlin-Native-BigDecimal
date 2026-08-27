@@ -26,6 +26,16 @@ import kotlin.jvm.Transient
 import kotlin.math.sqrt
 import kotlin.random.Random
 
+internal const val ZERO_REMAINDER = Int.MIN_VALUE
+
+internal class DivisionWithRemainderComparison(
+    val quotient: BigInteger,
+    val remainderComparison: Int
+) {
+    val isExact: Boolean
+        get() = remainderComparison == ZERO_REMAINDER
+}
+
 /**
  * An immutable arbitrary-precision signed integer.
  *
@@ -910,6 +920,20 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         val remainder = BigInt()
         BigInt.division(getBigInt()!!, divisorBigInt!!, quotient, remainder)
         return arrayOf(BigInteger(quotient), BigInteger(remainder))
+    }
+
+    /**
+     * Returns an owned quotient and primitive rounding metadata while keeping
+     * the native remainder scoped to the division call.
+     */
+    internal fun divideAndCompareRemainder(divisor: BigInteger): DivisionWithRemainderComparison {
+        val quotient = BigInt()
+        val comparison = BigInt.divisionWithRemainderComparison(
+            getBigInt()!!,
+            divisor.getBigInt()!!,
+            quotient
+        )
+        return DivisionWithRemainderComparison(BigInteger(quotient), comparison)
     }
 
     /**

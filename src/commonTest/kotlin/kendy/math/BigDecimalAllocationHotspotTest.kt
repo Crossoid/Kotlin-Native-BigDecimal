@@ -69,6 +69,62 @@ class BigDecimalAllocationHotspotTest {
         }
     }
 
+    @Test
+    fun scopedDivisionRemainderComparisonHandlesExactHalfAndSigns() {
+        assertScopedDivision("5", ZERO_REMAINDER, "10", "2")
+        assertScopedDivision("3", -1, "10", "3")
+        assertScopedDivision("3", 1, "11", "3")
+        assertScopedDivision("2", 0, "10", "4")
+        assertScopedDivision("-2", 0, "-10", "4")
+        assertScopedDivision("-2", 0, "10", "-4")
+        assertScopedDivision("2", 0, "-10", "-4")
+    }
+
+    @Test
+    fun largeBigDecimalDivisionRoundsScopedRemaindersWithEverySign() {
+        val factor = BigInteger.TEN.pow(100)
+        val four = BigDecimal(factor.multiply(BigInteger.valueOf(4)))
+        val minusFour = four.negate()
+        val ten = BigDecimal(factor.multiply(BigInteger.TEN))
+        val fourteen = BigDecimal(factor.multiply(BigInteger.valueOf(14)))
+        val context = MathContext(1, RoundingMode.HALF_EVEN)
+
+        assertEquals("2", ten.divide(four, context).toPlainString())
+        assertEquals("4", fourteen.divide(four, context).toPlainString())
+        assertEquals("-2", ten.negate().divide(four, context).toPlainString())
+        assertEquals("-2", ten.divide(minusFour, context).toPlainString())
+        assertEquals("4", fourteen.negate().divide(minusFour, context).toPlainString())
+    }
+
+    @Test
+    fun largeRoundingRemainderIsScoped() {
+        val context = MathContext(11, RoundingMode.HALF_EVEN)
+
+        assertRounded(
+            BigInteger("12345678902"),
+            -19,
+            BigInteger("123456789015000000000000000000"),
+            context,
+        )
+        assertRounded(
+            BigInteger("-12345678902"),
+            -19,
+            BigInteger("-123456789015000000000000000000"),
+            context,
+        )
+    }
+
+    private fun assertScopedDivision(
+        expectedQuotient: String,
+        expectedComparison: Int,
+        dividend: String,
+        divisor: String,
+    ) {
+        val division = BigInteger(dividend).divideAndCompareRemainder(BigInteger(divisor))
+        assertEquals(BigInteger(expectedQuotient), division.quotient)
+        assertEquals(expectedComparison, division.remainderComparison)
+    }
+
     private fun assertStripped(expectedUnscaled: BigInteger, expectedScale: Int, actual: BigDecimal) {
         assertEquals(expectedUnscaled, actual.unscaledValue())
         assertEquals(expectedScale, actual.scale())

@@ -104,6 +104,33 @@ actual internal object NativeBN {
     // int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
     actual external fun BN_div(dv: Long, rem: Long, m: Long, d: Long)
 
+    actual fun BN_divWithRemainderComparison(dv: Long, m: Long, d: Long): Int {
+        val remainder = BN_new()
+        try {
+            BN_div(dv, remainder, m, d)
+            if (sign(remainder) == 0) {
+                return Int.MIN_VALUE
+            }
+
+            BN_set_negative(remainder, 0)
+            BN_shift(remainder, remainder, 1)
+            if (sign(d) >= 0) {
+                return BN_cmp(remainder, d)
+            }
+
+            val divisorMagnitude = BN_new()
+            try {
+                BN_copy(divisorMagnitude, d)
+                BN_set_negative(divisorMagnitude, 0)
+                return BN_cmp(remainder, divisorMagnitude)
+            } finally {
+                BN_free(divisorMagnitude)
+            }
+        } finally {
+            BN_free(remainder)
+        }
+    }
+
     // int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
     actual external fun BN_nnmod(r: Long, a: Long, m: Long)
 

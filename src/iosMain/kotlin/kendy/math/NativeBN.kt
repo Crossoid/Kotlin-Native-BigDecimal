@@ -22,6 +22,11 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform
 import kotlin.native.ref.createCleaner
 
+@OptIn(ExperimentalForeignApi::class)
+private fun releaseBignum(bignum: Long) {
+    boringssl.BN_free(bignum.toCPointer<BIGNUM>())
+}
+
 /**
  * Binding between the Kotlin BigDecimal and boringssl's BIGNUM.
  * https://kotlinlang.org/docs/native-c-interop.html
@@ -77,6 +82,19 @@ actual internal object NativeBN {
     }
 
     /**
+     * Allocates a BIGNUM that cannot escape [block] and releases it
+     * deterministically, without creating a Kotlin StableRef/Cleaner.
+     */
+    private inline fun <T> withScopedBignum(block: (Long) -> T): T {
+        val bignum = toLong(boringssl.BN_new())
+        try {
+            return block(bignum)
+        } finally {
+            releaseBignum(bignum)
+        }
+    }
+
+    /**
      * Run code with a temporary OpenSSL/BoringSSL-allocated string and always free it afterwards.
      */
     private inline fun <T> useOpenSslString(str: CPointer<ByteVar>?, block: (CPointer<ByteVar>) -> T): T {
@@ -98,10 +116,14 @@ actual internal object NativeBN {
      * lifetime. The cleanup action is deliberately non-capturing.
      */
     @OptIn(ExperimentalNativeApi::class)
-    actual fun registerNativeAllocation(a: Long): Any? =
-        createCleaner(a) { bignum ->
-            boringssl.BN_free(bignum.toCPointer<BIGNUM>())
+    actual fun registerNativeAllocation(a: Long): Any? {
+        return try {
+            createCleaner(a) { bignum -> releaseBignum(bignum) }
+        } catch (error: Throwable) {
+            releaseBignum(a)
+            throw error
         }
+    }
 
     // void BN_free(BIGNUM *a);
     fun BN_free(a: Long) {
@@ -499,6 +521,27 @@ actual internal object NativeBN {
         withBNContext { ctx ->
             if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
                 throw ArithmeticException("BN_div failed")
+            }
+        }
+    }
+
+    actual fun BN_divWithRemainderComparison(dv: Long, m: Long, d: Long): Int {
+        checkValid(dv)
+        checkValid(m)
+        checkValid(d)
+        return withScopedBignum { rem ->
+            withBNContext { ctx ->
+                if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
+                    throw ArithmeticException("BN_div failed")
+                }
+            }
+            if (boringssl.BN_is_zero(toBigNum(rem)) != 0) {
+                Int.MIN_VALUE
+            } else {
+                if (boringssl.BN_lshift(toBigNum(rem), toBigNum(rem), 1) == 0) {
+                    throw ArithmeticException("BN_lshift failed")
+                }
+                boringssl.BN_ucmp(toBigNum(rem), toBigNum(d))
             }
         }
     }

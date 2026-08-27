@@ -275,33 +275,16 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             scale: Int,
             roundingMode: RoundingMode
         ): BigDecimal {
-            val quotAndRem =
-                scaledDividend.divideAndRemainder(scaledDivisor) // quotient and remainder
-            // If after division there is a remainder...
-            var quotient = quotAndRem!![0]
-            val remainder = quotAndRem[1]
-            if (remainder.signum() == 0) {
+            val division = scaledDividend.divideAndCompareRemainder(scaledDivisor)
+            var quotient = division.quotient
+            if (division.isExact) {
                 return BigDecimal(quotient, scale)
             }
             val sign = scaledDividend.signum() * scaledDivisor.signum()
-            var compRem: Int // 'compare to remainder'
-            if (scaledDivisor.bitLength() < 63) { // 63 in order to avoid out of long after *2
-                val rem = remainder.toLong()
-                val divisor = scaledDivisor.toLong()
-                compRem = compareForRounding(rem, divisor)
-                // To look if there is a carry
-                compRem = roundingBehavior(
-                    if (quotient.testBit(0)) 1 else 0,
-                    sign * (5 + compRem), roundingMode
-                )
-            } else {
-                // Checking if:  remainder * 2 >= scaledDivisor
-                compRem = remainder.abs().shiftLeftOneBit().compareTo(scaledDivisor.abs())
-                compRem = roundingBehavior(
-                    if (quotient.testBit(0)) 1 else 0,
-                    sign * (5 + compRem), roundingMode
-                )
-            }
+            val compRem = roundingBehavior(
+                if (quotient.testBit(0)) 1 else 0,
+                sign * (5 + division.remainderComparison), roundingMode
+            )
             if (compRem != 0) {
                 if (quotient.bitLength() < 63) {
                     return valueOf(quotient.toLong() + compRem, scale)
@@ -1405,7 +1388,6 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         var p = unscaledValue!!
         var q = divisor!!.unscaledValue!!
         val gcd: BigInteger // greatest common divisor between 'p' and 'q'
-        var quotAndRem: Array<BigInteger>
         val diffScale = scale.toLong() - divisor.scale
         val newScale: Int // the new scale for final quotient
         val k: Int // number of factors "2" in 'q'
@@ -1427,13 +1409,13 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         q = q.shiftRight(k)
         // To simplify all "5" factors of q, dividing by 5^l
         do {
-            quotAndRem = q.divideAndRemainder(FIVE_POW[i]!!)
-            if (quotAndRem!![1].signum() == 0) {
+            val division = q.divideAndCompareRemainder(FIVE_POW[i]!!)
+            if (division.isExact) {
                 l += i
                 if (i < lastPow) {
                     i++
                 }
-                q = quotAndRem[0]
+                q = division.quotient
             } else {
                 if (i == 1) {
                     break
@@ -1487,9 +1469,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         var i = 1 // index
         val lastPow = TEN_POW.size - 1 // last power of ten
         var integerQuot: BigInteger // for temporal results
-        var quotAndRem: Array<BigInteger> = arrayOf(
-            unscaledValue
-        )
+        var scaledDividend = unscaledValue!!
         // In special cases it reduces the problem to call the dual method
         if (mc!!.precision == 0 || isZero
             || divisor.isZero
@@ -1498,32 +1478,32 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         }
         if (trailingZeros > 0) {
             // To append trailing zeros at end of dividend
-            quotAndRem!![0] =
+            scaledDividend =
                 unscaledValue!!.multiply(kendy.math.Multiplication.powerOf10(trailingZeros))
             newScale += trailingZeros
         }
-        quotAndRem = quotAndRem!![0].divideAndRemainder(divisor.unscaledValue!!)
-        integerQuot = quotAndRem!![0]
+        val division = scaledDividend.divideAndCompareRemainder(divisor.unscaledValue!!)
+        integerQuot = division.quotient
         // Calculating the exact quotient with at least 'mc.precision()' digits
-        if (quotAndRem[1].signum() != 0) {
+        if (!division.isExact) {
             // Checking if:   2 * remainder >= divisor ?
-            compRem = quotAndRem[1].shiftLeftOneBit().compareTo(divisor.unscaledValue)
+            compRem = division.remainderComparison
             // quot := quot * 10 + r;     with 'r' in {-6,-5,-4, 0,+4,+5,+6}
             integerQuot = integerQuot.multiply(BigInteger.TEN)
-                .add(BigInteger.valueOf((quotAndRem[0].signum() * (5 + compRem)).toLong()))
+                .add(BigInteger.valueOf((integerQuot.signum() * (5 + compRem)).toLong()))
             newScale++
         } else {
             // To strip trailing zeros until the preferred scale is reached
             while (!integerQuot.testBit(0)) {
-                quotAndRem = integerQuot.divideAndRemainder(TEN_POW[i]!!)
-                if (quotAndRem!![1].signum() == 0
+                val stripped = integerQuot.divideAndCompareRemainder(TEN_POW[i]!!)
+                if (stripped.isExact
                     && newScale - i >= diffScale
                 ) {
                     newScale -= i.toLong()
                     if (i < lastPow) {
                         i++
                     }
-                    integerQuot = quotAndRem[0]
+                    integerQuot = stripped.quotient
                 } else {
                     if (i == 1) {
                         break
@@ -1576,15 +1556,15 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             integralValue = unscaledValue!!.multiply(powerOfTen).divide(divisor.unscaledValue!!)
             // To strip trailing zeros approximating to the preferred scale
             while (!integralValue.testBit(0)) {
-                val quotAndRem = integralValue.divideAndRemainder(TEN_POW[i]!!)
-                if (quotAndRem!![1].signum() == 0
+                val division = integralValue.divideAndCompareRemainder(TEN_POW[i]!!)
+                if (division.isExact
                     && tempScale - i >= newScale
                 ) {
                     tempScale -= i.toLong()
                     if (i < lastPow) {
                         i++
                     }
-                    integralValue = quotAndRem[0]
+                    integralValue = division.quotient
                 } else {
                     if (i == 1) {
                         break
@@ -1694,8 +1674,8 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         var i = 1
         // To strip trailing zeros until the specified precision is reached
         while (!strippedBI!!.testBit(0)) {
-            quotAndRem = strippedBI.divideAndRemainder(TEN_POW[i])
-            if (quotAndRem!![1].signum() == 0 &&
+            val division = strippedBI.divideAndCompareRemainder(TEN_POW[i])
+            if (division.isExact &&
                 (resultPrecision - i >= mcPrecision
                         || newScale - i >= diffScale)
             ) {
@@ -1704,7 +1684,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 if (i < lastPow) {
                     i++
                 }
-                strippedBI = quotAndRem[0]
+                strippedBI = division.quotient
             } else {
                 if (i == 1) {
                     break
@@ -2658,18 +2638,18 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         } else if (scale < 0) {
             unscaledValue!!.multiply(kendy.math.Multiplication.powerOf10((-scale).toLong()))
         } else { // (scale > 0)
-            val integerAndFraction: Array<BigInteger>?
             // An optimization before do a heavy division
             if (scale > approxPrecision() || scale > unscaledValue!!.lowestSetBit) {
                 throw ArithmeticException("Rounding necessary")
             }
-            integerAndFraction =
-                unscaledValue!!.divideAndRemainder(kendy.math.Multiplication.powerOf10(scale.toLong()))
-            if (integerAndFraction!![1].signum() != 0) {
+            val division = unscaledValue!!.divideAndCompareRemainder(
+                kendy.math.Multiplication.powerOf10(scale.toLong())
+            )
+            if (!division.isExact) {
                 // It exists a non-zero fractional part
                 throw ArithmeticException("Rounding necessary")
             }
-            integerAndFraction[0]
+            division.quotient
         }
     }
 
@@ -2985,11 +2965,11 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             }
         } else {
             val sizeOfFraction = kendy.math.Multiplication.powerOf10(discardedPrecision.toLong())
-            val integerAndFraction = value.divideAndRemainder(sizeOfFraction)
-            integer = integerAndFraction[0]
-            fractionSign = integerAndFraction[1].signum()
-            if (fractionSign != 0) {
-                fractionComparison = integerAndFraction[1].abs().shiftLeftOneBit().compareTo(sizeOfFraction)
+            val division = value.divideAndCompareRemainder(sizeOfFraction)
+            integer = division.quotient
+            if (!division.isExact) {
+                fractionSign = value.signum()
+                fractionComparison = division.remainderComparison
             }
         }
         var newScale = scale.toLong() - discardedPrecision

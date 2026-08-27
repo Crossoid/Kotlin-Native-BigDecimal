@@ -332,6 +332,23 @@ class BigInt {
             kendy.math.NativeBN.BN_div(quot, rem, dividend.bignum, divisor.bignum)
         }
 
+        /**
+         * Divides while keeping the remainder native and scoped. Only the
+         * quotient escapes as a Cleaner-owned BigInt.
+         */
+        internal fun divisionWithRemainderComparison(
+            dividend: BigInt,
+            divisor: BigInt,
+            quotient: BigInt
+        ): Int {
+            quotient.makeValid()
+            return NativeBN.BN_divWithRemainderComparison(
+                quotient.bignum,
+                dividend.bignum,
+                divisor.bignum
+            )
+        }
+
         @JvmStatic
         fun modulus(a: BigInt, m: BigInt): BigInt {
             // Sign of p is ignored! ?

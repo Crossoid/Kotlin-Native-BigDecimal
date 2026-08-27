@@ -69,6 +69,16 @@ expect internal object NativeBN {
 
     fun BN_div(dv: Long, rem: Long, m: Long, d: Long)
 
+    /**
+     * Divides [m] by [d], stores the quotient in [dv], and compares twice the
+     * absolute remainder with the absolute divisor. Returns [Int.MIN_VALUE]
+     * when the remainder is zero; otherwise returns -1, 0, or 1.
+     *
+     * The remainder is a native scoped temporary and must not escape this
+     * call or acquire a platform Cleaner.
+     */
+    fun BN_divWithRemainderComparison(dv: Long, m: Long, d: Long): Int
+
     fun BN_nnmod(r: Long, a: Long, m: Long)
 
     fun BN_mod_exp(r: Long, a: Long, p: Long, m: Long)
