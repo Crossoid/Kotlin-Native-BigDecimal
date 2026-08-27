@@ -913,6 +913,15 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     }
 
     /**
+     * Returns the remainder after division by a positive, single-word value
+     * without allocating a quotient or remainder BigInteger.
+     */
+    internal fun remainderByPositiveInt(divisor: Int): Int {
+        require(divisor > 0) { "divisor must be positive: $divisor" }
+        return BigInt.remainderByPositiveInt(getBigInt()!!, divisor)
+    }
+
+    /**
      * Returns a `BigInteger` whose value is `this / divisor`.
      *
      * @param divisor value by which `this` is divided.

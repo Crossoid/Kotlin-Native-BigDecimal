@@ -2028,10 +2028,11 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             decimalDigitsInLong(smallValue)
         } else {
             var decimalDigits = 1 + ((bitLength - 1) * LOG10_2).toInt()
-            // If after division the number isn't zero, there exists an additional digit
-            if (unscaledValue!!.divide(kendy.math.Multiplication.powerOf10(decimalDigits.toLong()))
-                    .signum() != 0
-            ) {
+            val value = unscaledValue!!
+            val magnitude = if (value.signum() < 0) value.abs() else value
+            // The bit-length estimate is either exact or one digit short.
+            // Comparing avoids allocating a quotient and running BN_div.
+            if (magnitude.compareTo(kendy.math.Multiplication.powerOf10(decimalDigits.toLong())) >= 0) {
                 decimalDigits++
             }
             decimalDigits
@@ -2298,36 +2299,33 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * trailing zeros of the unscaled value have been removed.
      */
     fun stripTrailingZeros(): BigDecimal {
-        var i = 1 // 1 <= i <= 18
-        val lastPow = TEN_POW.size - 1
         var newScale = scale.toLong()
         if (isZero) {
             return BigDecimal(BigInteger.ZERO, 0)
         }
         var strippedBI = unscaledValue!!
-        var quotAndRem: Array<BigInteger>?
 
-        // while the number is even...
-        while (!strippedBI.testBit(0)) {
-            // To divide by 10^i
-            quotAndRem = strippedBI.divideAndRemainder(TEN_POW[i])
-            // To look the remainder
-            if (quotAndRem!![1].signum() == 0) {
-                // To adjust the scale
-                newScale -= i.toLong()
-                if (i < lastPow) {
-                    // To set to the next power
-                    i++
-                }
-                strippedBI = quotAndRem[0]
-            } else {
-                if (i == 1) {
-                    // 'this' has no more trailing zeros
-                    break
-                }
-                // To set to the smallest power of ten
-                i = 1
+        while (true) {
+            // BN_mod_word does not allocate a BIGNUM. Divisibility by powers
+            // of ten is monotonic, so binary-search the largest 10^n that
+            // fits in a positive Int and strip up to nine zeros per quotient.
+            if (strippedBI.remainderByPositiveInt(10) != 0) {
+                break
             }
+
+            var low = 1
+            var high = kendy.math.Multiplication.tenPows.lastIndex
+            while (low < high) {
+                val middle = (low + high + 1) ushr 1
+                if (strippedBI.remainderByPositiveInt(kendy.math.Multiplication.tenPows[middle]) == 0) {
+                    low = middle
+                } else {
+                    high = middle - 1
+                }
+            }
+
+            strippedBI = strippedBI.divide(TEN_POW[low])
+            newScale -= low.toLong()
         }
         return BigDecimal(strippedBI, safeLongToInt(newScale))
     }
