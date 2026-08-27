@@ -2032,7 +2032,7 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             val magnitude = if (value.signum() < 0) value.abs() else value
             // The bit-length estimate is either exact or one digit short.
             // Comparing avoids allocating a quotient and running BN_div.
-            if (magnitude.compareTo(kendy.math.Multiplication.powerOf10(decimalDigits.toLong())) >= 0) {
+            if (magnitude.compareTo(kendy.math.Multiplication.powerOf10ForPrecision(decimalDigits)) >= 0) {
                 decimalDigits++
             }
             decimalDigits
@@ -2962,37 +2962,54 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             return
         }
         // Getting the integer part and the discarded fraction
-        val sizeOfFraction: BigInteger =
-            kendy.math.Multiplication.powerOf10(discardedPrecision.toLong())
-        val integerAndFraction = unscaledValue!!.divideAndRemainder(sizeOfFraction)
+        val value = unscaledValue!!
+        var integer: BigInteger
+        var fractionSign = 0
+        var fractionComparison = 0
+        if (discardedPrecision < kendy.math.Multiplication.tenPows.size) {
+            // BN_mod_word returns the magnitude of this remainder without
+            // allocating a temporary BIGNUM. This is the common rounding path.
+            val fractionDivisor = kendy.math.Multiplication.tenPows[discardedPrecision]
+            val fractionMagnitude = value.remainderByPositiveInt(fractionDivisor)
+            integer = value.divide(TEN_POW[discardedPrecision])
+            if (fractionMagnitude != 0) {
+                fractionSign = value.signum()
+                fractionComparison = (fractionMagnitude * 2).compareTo(fractionDivisor)
+            }
+        } else {
+            val sizeOfFraction = kendy.math.Multiplication.powerOf10(discardedPrecision.toLong())
+            val integerAndFraction = value.divideAndRemainder(sizeOfFraction)
+            integer = integerAndFraction[0]
+            fractionSign = integerAndFraction[1].signum()
+            if (fractionSign != 0) {
+                fractionComparison = integerAndFraction[1].abs().shiftLeftOneBit().compareTo(sizeOfFraction)
+            }
+        }
         var newScale = scale.toLong() - discardedPrecision
         var compRem: Int
         val tempBD: BigDecimal
         // If the discarded fraction is non-zero, perform rounding
-        if (integerAndFraction!![1].signum() != 0) {
-            // To check if the discarded fraction >= 0.5
-            compRem = integerAndFraction[1].abs().shiftLeftOneBit().compareTo(sizeOfFraction)
+        if (fractionSign != 0) {
             // To look if there is a carry
             compRem = roundingBehavior(
-                if (integerAndFraction[0].testBit(0)) 1 else 0,
-                integerAndFraction[1].signum() * (5 + compRem),
+                if (integer.testBit(0)) 1 else 0,
+                fractionSign * (5 + fractionComparison),
                 mc.roundingMode!!
             )
             if (compRem != 0) {
-                integerAndFraction[0] =
-                    integerAndFraction[0].add(BigInteger.valueOf(compRem.toLong()))
+                integer = integer.add(BigInteger.valueOf(compRem.toLong()))
             }
-            tempBD = BigDecimal(integerAndFraction[0])
+            tempBD = BigDecimal(integer)
             // If after to add the increment the precision changed, we normalize the size
             if (tempBD.precision() > mcPrecision) {
-                integerAndFraction[0] = integerAndFraction[0].divide(BigInteger.TEN)
+                integer = integer.divide(BigInteger.TEN)
                 newScale--
             }
         }
         // To update all internal fields
         scale = safeLongToInt(newScale)
         precision = mcPrecision
-        unscaledValue = integerAndFraction[0]
+        unscaledValue = integer
     }
 
     /**

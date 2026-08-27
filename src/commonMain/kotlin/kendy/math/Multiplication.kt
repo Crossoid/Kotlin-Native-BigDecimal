@@ -51,6 +51,14 @@ internal object Multiplication {
     var bigTenPows = Array(32) { BigInteger.valueOf(0) }
 
     /**
+     * Frequently requested powers used only to determine decimal precision.
+     * Keeping a modest immutable cache avoids rebuilding 5^n and shifting it
+     * for every transient BigDecimal while leaving arithmetic power selection
+     * unchanged.
+     */
+    private val precisionTenPows = Array(256) { BigInteger.valueOf(0) }
+
+    /**
      * An array with the first powers of five in `BigInteger` version.
      * (`5^0,5^1,...,5^31`)
      */
@@ -143,6 +151,15 @@ internal object Multiplication {
         return res
     }
 
+    fun powerOf10ForPrecision(exp: Int): BigInteger {
+        // PRE: exp >= 0
+        return if (exp < precisionTenPows.size) {
+            precisionTenPows[exp]
+        } else {
+            powerOf10(exp.toLong())
+        }
+    }
+
     /**
      * Multiplies a number by a power of five.
      * This method is used in `BigDecimal` class.
@@ -180,6 +197,14 @@ internal object Multiplication {
             bigTenPows[i] = bigTenPows[i - 1]!!
                 .multiply(BigInteger.TEN)
             i++
+        }
+
+        for (power in precisionTenPows.indices) {
+            precisionTenPows[power] = if (power < bigTenPows.size) {
+                bigTenPows[power]
+            } else {
+                precisionTenPows[power - 1].multiply(BigInteger.TEN)
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ package kendy.math
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class BigDecimalAllocationHotspotTest {
     @Test
@@ -23,6 +24,15 @@ class BigDecimalAllocationHotspotTest {
     }
 
     @Test
+    fun precisionIsExactAtCachedPowerBoundary() {
+        val tenTo255 = BigInteger.TEN.pow(255)
+        val tenTo256 = tenTo255.multiply(BigInteger.TEN)
+
+        assertEquals(256, BigDecimal(tenTo255).precision())
+        assertEquals(257, BigDecimal(tenTo256).precision())
+    }
+
+    @Test
     fun stripTrailingZerosHandlesLargeChunksAndSigns() {
         val tenTo1000 = BigInteger.TEN.pow(1000)
 
@@ -37,7 +47,40 @@ class BigDecimalAllocationHotspotTest {
         assertStripped(BigInteger.ZERO, 0, BigDecimal(BigInteger.ZERO, 1000).stripTrailingZeros())
     }
 
+    @Test
+    fun roundsWithSingleWordRemainderForPositiveAndNegativeValues() {
+        val context = MathContext(11, RoundingMode.HALF_EVEN)
+
+        assertRounded(BigInteger("12345678902"), -9, BigInteger("12345678901500000000"), context)
+        assertRounded(BigInteger("-12345678902"), -9, BigInteger("-12345678901500000000"), context)
+        assertRounded(BigInteger("12345678901"), -9, BigInteger("12345678901234567895"), context)
+    }
+
+    @Test
+    fun roundingFastPathNormalizesCarryAndHonorsUnnecessary() {
+        assertRounded(
+            BigInteger("10000000000"),
+            -10,
+            BigInteger("99999999999500000000"),
+            MathContext(11, RoundingMode.HALF_UP),
+        )
+        assertFailsWith<ArithmeticException> {
+            BigDecimal(BigInteger("12345678901234567895")).round(MathContext(11, RoundingMode.UNNECESSARY))
+        }
+    }
+
     private fun assertStripped(expectedUnscaled: BigInteger, expectedScale: Int, actual: BigDecimal) {
+        assertEquals(expectedUnscaled, actual.unscaledValue())
+        assertEquals(expectedScale, actual.scale())
+    }
+
+    private fun assertRounded(
+        expectedUnscaled: BigInteger,
+        expectedScale: Int,
+        value: BigInteger,
+        context: MathContext,
+    ) {
+        val actual = BigDecimal(value).round(context)
         assertEquals(expectedUnscaled, actual.unscaledValue())
         assertEquals(expectedScale, actual.scale())
     }
