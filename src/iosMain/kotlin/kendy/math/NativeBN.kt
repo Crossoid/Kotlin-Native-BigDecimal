@@ -18,6 +18,8 @@ package kendy.math
 
 import boringssl.BIGNUM
 import kotlinx.cinterop.*
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 /**
  * Binding between the Kotlin BigDecimal and boringssl's BIGNUM.
@@ -89,6 +91,16 @@ actual internal object NativeBN {
     actual fun BN_new(): Long {
         return toLong(boringssl.BN_new())
     }
+
+    /**
+     * Tie every BIGNUM allocated for a BigInt to Kotlin/Native's object
+     * lifetime. The cleanup action is deliberately non-capturing.
+     */
+    @OptIn(ExperimentalNativeApi::class)
+    actual fun registerNativeAllocation(a: Long): Any? =
+        createCleaner(a) { bignum ->
+            boringssl.BN_free(bignum.toCPointer<BIGNUM>())
+        }
 
     // void BN_free(BIGNUM *a);
     fun BN_free(a: Long) {

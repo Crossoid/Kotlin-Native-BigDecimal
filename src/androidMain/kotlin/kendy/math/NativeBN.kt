@@ -18,6 +18,10 @@ package kendy.math
 actual internal object NativeBN {
     actual external fun BN_new(): Long
 
+    // Android's JNI implementation retains its existing native ownership
+    // behavior. The cleaner is required by the direct BoringSSL iOS binding.
+    actual fun registerNativeAllocation(a: Long): Any? = null
+
     // BIGNUM *BN_new(void);
     external fun BN_free(a: Long)
 

@@ -7,6 +7,12 @@ package kendy.math
 expect internal object NativeBN {
     fun BN_new(): Long
 
+    /**
+     * Keeps the platform-specific cleanup for [a] alive until its owning [BigInt]
+     * is collected. Kotlin/Native does not manage memory allocated by BoringSSL.
+     */
+    fun registerNativeAllocation(a: Long): Any?
+
     fun BN_cmp(a: Long, b: Long): Int
 
     fun BN_copy(to: Long, from: Long)

@@ -30,6 +30,15 @@ class BigInt {
     //@ReachabilitySensitive
     @Transient
     private var bignum: Long = 0
+
+    /**
+     * On native platforms this retains the cleaner which owns [bignum]. If the
+     * cleaner were not retained, it could run before this BigInt becomes
+     * unreachable and leave [bignum] dangling.
+     */
+    @Transient
+    private var nativeAllocationCleaner: Any? = null
+
     override fun toString(): String {
         return decString()!!
     }
@@ -40,9 +49,13 @@ class BigInt {
 
     private fun makeValid() {
         if (bignum == 0L) {
-            bignum = NativeBN.BN_new()
-            // TODO IOS registry.registerNativeAllocation(this, bignum)
+            setBignum(NativeBN.BN_new())
         }
+    }
+
+    private fun setBignum(value: Long) {
+        bignum = value
+        nativeAllocationCleaner = NativeBN.registerNativeAllocation(value)
     }
 
     fun putCopy(from: BigInt) {
@@ -221,8 +234,7 @@ class BigInt {
 
         private fun newBigInt(): BigInt {
             val bi = BigInt()
-            bi.bignum = NativeBN.BN_new()
-            // TODO IOS registry.registerNativeAllocation(bi, bi.bignum)
+            bi.setBignum(NativeBN.BN_new())
             return bi
         }
 
