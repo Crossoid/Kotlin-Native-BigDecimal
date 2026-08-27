@@ -2360,17 +2360,24 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
             } else if (diffPrecision < diffScale - 1) {
                 -thisSign
             } else { // thisSign == val.signum()  and  diffPrecision is aprox. diffScale
-                var thisUnscaled = unscaledValue
-                var valUnscaled = `val`.unscaledValue
-                // If any of both precision is bigger, append zeros to the shorter one
-                if (diffScale < 0) {
-                    thisUnscaled =
-                        thisUnscaled.multiply(kendy.math.Multiplication.powerOf10(-diffScale))
-                } else if (diffScale > 0) {
-                    valUnscaled =
-                        valUnscaled.multiply(kendy.math.Multiplication.powerOf10(diffScale))
+                val exactDiffPrecision = precision().toLong() - `val`.precision()
+                if (exactDiffPrecision > diffScale) {
+                    thisSign
+                } else if (exactDiffPrecision < diffScale) {
+                    -thisSign
+                } else {
+                    var thisUnscaled = unscaledValue
+                    var valUnscaled = `val`.unscaledValue
+                    // If any of both precision is bigger, append zeros to the shorter one
+                    if (diffScale < 0) {
+                        thisUnscaled =
+                            thisUnscaled.multiply(kendy.math.Multiplication.powerOf10(-diffScale))
+                    } else if (diffScale > 0) {
+                        valUnscaled =
+                            valUnscaled.multiply(kendy.math.Multiplication.powerOf10(diffScale))
+                    }
+                    thisUnscaled.compareTo(valUnscaled)
                 }
-                thisUnscaled.compareTo(valUnscaled)
             }
         } else if (thisSign < valueSign) {
             -1
