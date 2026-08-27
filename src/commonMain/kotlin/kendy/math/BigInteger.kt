@@ -218,11 +218,9 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
      * representation of a `BigInteger` or if `radix <
      * Character.MIN_RADIX` or `radix > Character.MAX_RADIX`.
      */
-    /* TODO IOS
     constructor(value: String, radix: Int) {
-        if (value == null) {
-            throw NullPointerException("value == null")
-        }
+        checkRadix(radix)
+        checkStringValue(value)
         if (radix == 10) {
             val bigInt = BigInt()
             bigInt.putDecString(value)
@@ -232,16 +230,9 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             bigInt.putHexString(value)
             setBigInt(bigInt)
         } else {
-            if (radix < java.lang.Character.MIN_RADIX || radix > java.lang.Character.MAX_RADIX) {
-                throw NumberFormatException("Invalid radix: $radix")
-            }
-            if (value.isEmpty()) {
-                throw NumberFormatException("value.isEmpty()")
-            }
             parseFromString(this, value, radix)
         }
     }
-    */
 
     /**
      * Constructs a new `BigInteger` instance with the given sign and
@@ -854,7 +845,7 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
      * @param radix base to be used for the string representation.
      */
     fun toString(radix: Int): String {
-        return if (radix == 10) {
+        return if (radix !in Conversion.MIN_RADIX..Conversion.MAX_RADIX || radix == 10) {
             getBigInt()!!.decString()!!
         } else {
             prepareJavaRepresentation()
@@ -1258,6 +1249,10 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
                 sign = -1
                 startChar = 1
                 stringLength--
+            } else if (value[0] == '+') {
+                sign = 1
+                startChar = 1
+                stringLength--
             } else {
                 sign = 1
                 startChar = 0
@@ -1293,6 +1288,18 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             }
             val numberLength = digitIndex
             bi.setJavaRepresentation(sign, numberLength, digits)
+        }
+
+        private fun checkRadix(radix: Int) {
+            if (radix !in Conversion.MIN_RADIX..Conversion.MAX_RADIX) {
+                throw NumberFormatException("Invalid radix: $radix")
+            }
+        }
+
+        private fun checkStringValue(value: String) {
+            if (value.isEmpty() || value.length == 1 && (value[0] == '-' || value[0] == '+')) {
+                throw NumberFormatException("Invalid BigInteger: $value")
+            }
         }
     }
 

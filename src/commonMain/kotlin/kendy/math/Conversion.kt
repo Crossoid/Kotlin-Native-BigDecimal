@@ -52,6 +52,9 @@ internal object Conversion {
     /** @see BigInteger.toString
      */
     fun bigInteger2String(`val`: BigInteger, radix: Int): String {
+        if (radix !in MIN_RADIX..MAX_RADIX) {
+            return `val`.toString()
+        }
         `val`.prepareJavaRepresentation()
         val sign = `val`.sign
         val numberLength = `val`.numberLength
@@ -67,9 +70,7 @@ internal object Conversion {
             }
             return v.toString(radix)
         }
-        if (radix == 10 // TODO IOS || radix < java.lang.Character.MIN_RADIX
-            // TODO IOS || radix > java.lang.Character.MAX_RADIX
-        ) {
+        if (radix == 10) {
             return `val`.toString()
         }
         val bitsForRadixDigit: Double
@@ -132,6 +133,9 @@ internal object Conversion {
         }
         return result.concatToString(currentChar, currentChar + (resLengthInChars - currentChar))
     }
+
+    const val MIN_RADIX = 2
+    const val MAX_RADIX = 36
 
     /**
      * Builds the correspondent `String` representation of `val`
