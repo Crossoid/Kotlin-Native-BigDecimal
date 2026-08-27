@@ -892,6 +892,36 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     }
 
     /**
+     * Computes a product whose native storage is released when [block] exits.
+     * [block] must promote [product] before allowing it to escape.
+     */
+    internal fun <T> withScopedProduct(
+        value: BigInteger,
+        block: (product: BigInteger) -> T
+    ): T {
+        val scoped = BigInt.scopedProduct(getBigInt()!!, value.getBigInt()!!)
+        val product = BigInteger(scoped)
+        try {
+            return block(product)
+        } finally {
+            scoped.releaseScopedNativeAllocation()
+        }
+    }
+
+    internal fun promoteScopedNativeAllocation() {
+        getBigInt()!!.promoteScopedNativeAllocation()
+    }
+
+    internal fun multiplyByPositiveIntInPlace(value: Int) {
+        require(value > 0) { "value must be positive: $value" }
+        getBigInt()!!.multiplyScopedByPositiveInt(value)
+    }
+
+    internal fun addInPlace(value: BigInteger) {
+        getBigInt()!!.addToScoped(value.getBigInt()!!)
+    }
+
+    /**
      * Returns a `BigInteger` whose value is `pow(this, exp)`.
      *
      * @throws ArithmeticException if `exp < 0`.
@@ -934,6 +964,26 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             quotient
         )
         return DivisionWithRemainderComparison(BigInteger(quotient), comparison)
+    }
+
+    /**
+     * Divides using a quotient that has deterministic lexical ownership.
+     * [block] must promote [quotient] before allowing it to escape.
+     */
+    internal fun <T> withScopedDivisionAndRemainderComparison(
+        divisor: BigInteger,
+        block: (quotient: BigInteger, remainderComparison: Int) -> T
+    ): T {
+        val (scoped, comparison) = BigInt.scopedDivisionWithRemainderComparison(
+            getBigInt()!!,
+            divisor.getBigInt()!!
+        )
+        val quotient = BigInteger(scoped)
+        try {
+            return block(quotient, comparison)
+        } finally {
+            scoped.releaseScopedNativeAllocation()
+        }
     }
 
     /**

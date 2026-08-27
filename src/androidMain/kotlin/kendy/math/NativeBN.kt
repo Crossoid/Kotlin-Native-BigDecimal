@@ -22,6 +22,14 @@ actual internal object NativeBN {
     // behavior. The cleaner is required by the direct BoringSSL iOS binding.
     actual fun registerNativeAllocation(a: Long): Any? = null
 
+    actual fun registerScopedAllocation(a: Long) = Unit
+
+    actual fun releaseScopedAllocation(a: Long) {
+        BN_free(a)
+    }
+
+    actual fun promoteScopedAllocation(a: Long): Any? = null
+
     // BIGNUM *BN_new(void);
     external fun BN_free(a: Long)
 

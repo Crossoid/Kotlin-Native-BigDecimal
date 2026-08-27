@@ -114,6 +114,36 @@ class BigDecimalAllocationHotspotTest {
         )
     }
 
+    @Test
+    fun scopedMultiplyPromotesOnlyTheReturnedUnscaledValue() {
+        val left = BigDecimal(BigInteger.TEN.pow(200).add(BigInteger.valueOf(3)))
+        val right = BigDecimal(BigInteger.TEN.pow(180).add(BigInteger.valueOf(7)))
+
+        val exact = left.multiply(right, MathContext(500, RoundingMode.HALF_EVEN))
+        assertEquals(left.multiply(right), exact)
+
+        val rounded = left.multiply(right, MathContext(35, RoundingMode.HALF_EVEN))
+        assertEquals(left.multiply(right).round(MathContext(35, RoundingMode.HALF_EVEN)), rounded)
+    }
+
+    @Test
+    fun scopedDivideHandlesExactAndInexactQuotients() {
+        val factor = BigInteger.TEN.pow(220)
+        val exactDividend = BigDecimal(factor.multiply(BigInteger.valueOf(21)))
+        val exactDivisor = BigDecimal(BigInteger.valueOf(7))
+        assertEquals(
+            factor.multiply(BigInteger.valueOf(3)),
+            exactDividend.divide(exactDivisor, MathContext(500, RoundingMode.HALF_EVEN)).unscaledValue(),
+        )
+
+        val inexactDividend = BigDecimal(factor.multiply(BigInteger.valueOf(10)))
+        val inexactDivisor = BigDecimal(factor.multiply(BigInteger.valueOf(6)))
+        assertEquals(
+            "1.6666666666666666667",
+            inexactDividend.divide(inexactDivisor, MathContext(20, RoundingMode.HALF_EVEN)).toPlainString(),
+        )
+    }
+
     private fun assertScopedDivision(
         expectedQuotient: String,
         expectedComparison: Int,

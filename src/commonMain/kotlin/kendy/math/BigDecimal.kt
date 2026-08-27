@@ -1194,9 +1194,23 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
      * if `multiplicand == null` or `mc == null`.
      */
     fun multiply(multiplicand: BigDecimal?, mc: MathContext?): BigDecimal {
-        val result = multiply(multiplicand)
-        result!!.inplaceRound(mc!!)
-        return result
+        val value = multiplicand!!
+        val context = mc!!
+        val newScale = scale.toLong() + value.scale
+        if (isZero || value.isZero || bitLength + value.bitLength < 64 || context.precision == 0) {
+            val result = multiply(value)
+            result.inplaceRound(context)
+            return result
+        }
+
+        return unscaledValue.withScopedProduct(value.unscaledValue) { product ->
+            val result = BigDecimal(product, safeLongToInt(newScale))
+            result.inplaceRound(context)
+            if (result.intVal === product) {
+                product.promoteScopedNativeAllocation()
+            }
+            result
+        }
     }
 
     /**
@@ -1465,7 +1479,6 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 + divisor!!.approxPrecision()) - approxPrecision()
         val diffScale = scale.toLong() - divisor.scale
         var newScale = diffScale // scale of the final quotient
-        val compRem: Int // to compare the remainder
         var i = 1 // index
         val lastPow = TEN_POW.size - 1 // last power of ten
         var integerQuot: BigInteger // for temporal results
@@ -1482,38 +1495,47 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
                 unscaledValue!!.multiply(kendy.math.Multiplication.powerOf10(trailingZeros))
             newScale += trailingZeros
         }
-        val division = scaledDividend.divideAndCompareRemainder(divisor.unscaledValue!!)
-        integerQuot = division.quotient
-        // Calculating the exact quotient with at least 'mc.precision()' digits
-        if (!division.isExact) {
-            // Checking if:   2 * remainder >= divisor ?
-            compRem = division.remainderComparison
-            // quot := quot * 10 + r;     with 'r' in {-6,-5,-4, 0,+4,+5,+6}
-            integerQuot = integerQuot.multiply(BigInteger.TEN)
-                .add(BigInteger.valueOf((integerQuot.signum() * (5 + compRem)).toLong()))
-            newScale++
-        } else {
-            // To strip trailing zeros until the preferred scale is reached
-            while (!integerQuot.testBit(0)) {
-                val stripped = integerQuot.divideAndCompareRemainder(TEN_POW[i]!!)
-                if (stripped.isExact
-                    && newScale - i >= diffScale
-                ) {
-                    newScale -= i.toLong()
-                    if (i < lastPow) {
-                        i++
+        return scaledDividend.withScopedDivisionAndRemainderComparison(
+            divisor.unscaledValue!!
+        ) { scopedQuotient, remainderComparison ->
+            integerQuot = scopedQuotient
+            // Calculating the exact quotient with at least 'mc.precision()' digits
+            if (remainderComparison != ZERO_REMAINDER) {
+                // quot := quot * 10 + r; with 'r' in {-6,-5,-4,+4,+5,+6}.
+                // The quotient is uniquely scoped, so mutate it without two
+                // additional Cleaner-owned BIGNUM intermediates.
+                val roundingDigit = integerQuot.signum() * (5 + remainderComparison)
+                integerQuot.multiplyByPositiveIntInPlace(10)
+                integerQuot.addInPlace(BigInteger.valueOf(roundingDigit.toLong()))
+                newScale++
+            } else {
+                // To strip trailing zeros until the preferred scale is reached
+                while (!integerQuot.testBit(0)) {
+                    val stripped = integerQuot.divideAndCompareRemainder(TEN_POW[i]!!)
+                    if (stripped.isExact
+                        && newScale - i >= diffScale
+                    ) {
+                        newScale -= i.toLong()
+                        if (i < lastPow) {
+                            i++
+                        }
+                        integerQuot = stripped.quotient
+                    } else {
+                        if (i == 1) {
+                            break
+                        }
+                        i = 1
                     }
-                    integerQuot = stripped.quotient
-                } else {
-                    if (i == 1) {
-                        break
-                    }
-                    i = 1
                 }
             }
+            // To perform rounding. Promote the scoped quotient only when
+            // inplaceRound retained it as the result's actual unscaled value.
+            val result = BigDecimal(integerQuot, safeLongToInt(newScale), mc)
+            if (result.intVal === scopedQuotient) {
+                scopedQuotient.promoteScopedNativeAllocation()
+            }
+            result
         }
-        // To perform rounding
-        return BigDecimal(integerQuot, safeLongToInt(newScale), mc)
     }
 
     /**

@@ -13,6 +13,15 @@ expect internal object NativeBN {
      */
     fun registerNativeAllocation(a: Long): Any?
 
+    /** Marks [a] as explicitly scoped without installing a platform Cleaner. */
+    fun registerScopedAllocation(a: Long)
+
+    /** Frees an explicitly scoped allocation. */
+    fun releaseScopedAllocation(a: Long)
+
+    /** Transfers a scoped allocation to a Cleaner without counting it twice. */
+    fun promoteScopedAllocation(a: Long): Any?
+
     fun BN_cmp(a: Long, b: Long): Int
 
     fun BN_copy(to: Long, from: Long)

@@ -118,12 +118,25 @@ actual internal object NativeBN {
     @OptIn(ExperimentalNativeApi::class)
     actual fun registerNativeAllocation(a: Long): Any? {
         return try {
-            createCleaner(a) { bignum -> releaseBignum(bignum) }
+            createAllocationCleaner(a)
         } catch (error: Throwable) {
             releaseBignum(a)
             throw error
         }
     }
+
+    @OptIn(ExperimentalNativeApi::class)
+    private fun createAllocationCleaner(a: Long): Any? {
+        return createCleaner(a) { bignum -> releaseBignum(bignum) }
+    }
+
+    actual fun registerScopedAllocation(a: Long) = Unit
+
+    actual fun releaseScopedAllocation(a: Long) {
+        releaseBignum(a)
+    }
+
+    actual fun promoteScopedAllocation(a: Long): Any? = createAllocationCleaner(a)
 
     // void BN_free(BIGNUM *a);
     fun BN_free(a: Long) {

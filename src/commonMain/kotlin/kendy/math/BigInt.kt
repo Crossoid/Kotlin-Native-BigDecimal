@@ -39,6 +39,10 @@ class BigInt {
     @Transient
     private var nativeAllocationCleaner: Any? = null
 
+    /** True while this handle is owned by a lexical scope rather than a Cleaner. */
+    @Transient
+    private var scopedNativeAllocation = false
+
     override fun toString(): String {
         return decString()!!
     }
@@ -56,6 +60,36 @@ class BigInt {
     private fun setBignum(value: Long) {
         bignum = value
         nativeAllocationCleaner = NativeBN.registerNativeAllocation(value)
+    }
+
+    private fun setScopedBignum(value: Long) {
+        bignum = value
+        NativeBN.registerScopedAllocation(value)
+        scopedNativeAllocation = true
+    }
+
+    internal fun promoteScopedNativeAllocation() {
+        check(scopedNativeAllocation) { "BigInt is not scoped" }
+        nativeAllocationCleaner = NativeBN.promoteScopedAllocation(bignum)
+        scopedNativeAllocation = false
+    }
+
+    internal fun releaseScopedNativeAllocation() {
+        if (!scopedNativeAllocation) return
+        val value = bignum
+        bignum = 0
+        scopedNativeAllocation = false
+        NativeBN.releaseScopedAllocation(value)
+    }
+
+    internal fun multiplyScopedByPositiveInt(value: Int) {
+        check(scopedNativeAllocation) { "BigInt is not scoped" }
+        multiplyByPositiveInt(value)
+    }
+
+    internal fun addToScoped(value: BigInt) {
+        check(scopedNativeAllocation) { "BigInt is not scoped" }
+        add(value)
     }
 
     fun putCopy(from: BigInt) {
@@ -232,6 +266,12 @@ class BigInt {
             return bi
         }
 
+        private fun newScopedBigInt(): BigInt {
+            val bi = BigInt()
+            bi.setScopedBignum(NativeBN.BN_new())
+            return bi
+        }
+
         @JvmStatic
         fun cmp(a: BigInt, b: BigInt): Int {
             return kendy.math.NativeBN.BN_cmp(a.bignum, b.bignum)
@@ -295,6 +335,17 @@ class BigInt {
             return r
         }
 
+        internal fun scopedProduct(a: BigInt, b: BigInt): BigInt {
+            val r = newScopedBigInt()
+            try {
+                kendy.math.NativeBN.BN_mul(r.bignum, a.bignum, b.bignum)
+                return r
+            } catch (error: Throwable) {
+                r.releaseScopedNativeAllocation()
+                throw error
+            }
+        }
+
         fun bigExp(a: BigInt, p: BigInt): BigInt {
             // Sign of p is ignored!
             val r = newBigInt()
@@ -347,6 +398,24 @@ class BigInt {
                 dividend.bignum,
                 divisor.bignum
             )
+        }
+
+        internal fun scopedDivisionWithRemainderComparison(
+            dividend: BigInt,
+            divisor: BigInt
+        ): Pair<BigInt, Int> {
+            val quotient = newScopedBigInt()
+            try {
+                val comparison = NativeBN.BN_divWithRemainderComparison(
+                    quotient.bignum,
+                    dividend.bignum,
+                    divisor.bignum
+                )
+                return quotient to comparison
+            } catch (error: Throwable) {
+                quotient.releaseScopedNativeAllocation()
+                throw error
+            }
         }
 
         @JvmStatic
