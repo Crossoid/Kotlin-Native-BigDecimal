@@ -31,6 +31,9 @@ versions were released so far:
 
 * 1.1.1
   - Fixed leaking the native BIGNUM owned by every BigInt on iOS
+  - Restored safe BigInteger parsing and formatting for radices 2 through 36
+  - Made lazy BigInteger representation initialization thread-safe
+  - Added an explicit native byte-order guard
 * 1.1.0
   - Fixed a serious memory leak
   - Changed nullable BigDecimal? returns to non-null BigDecimal
