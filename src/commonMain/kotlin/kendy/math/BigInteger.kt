@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 /*
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -16,6 +18,8 @@
  */
 package kendy.math
 
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
@@ -41,10 +45,18 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     private var bigInt: BigInt? = null
 
     @Transient
-    private var nativeIsValid = false
+    private val nativeValidity = AtomicBoolean(false)
+
+    private var nativeIsValid: Boolean
+        get() = nativeValidity.load()
+        set(value) = nativeValidity.store(value)
 
     @Transient
-    private var javaIsValid = false
+    private val javaValidity = AtomicBoolean(false)
+
+    private var javaIsValid: Boolean
+        get() = javaValidity.load()
+        set(value) = javaValidity.store(value)
 
     /** The magnitude of this in the little-endian representation.  */
     @Transient
@@ -291,15 +303,13 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         if (nativeIsValid) {
             return bigInt
         }
-        // TODO IOS synchronized(this) {
-            if (nativeIsValid) {
-                return bigInt
-            }
-            val bigInt = BigInt()
-            bigInt.putLittleEndianInts(digits, sign < 0)
-            setBigInt(bigInt)
+        if (nativeIsValid) {
             return bigInt
-        // TODO IOS }
+        }
+        val bigInt = BigInt()
+        bigInt.putLittleEndianInts(digits, sign < 0)
+        setBigInt(bigInt)
+        return bigInt
     }
 
     private fun setBigInt(bigInt: BigInt) {
@@ -327,14 +337,12 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         if (javaIsValid) {
             return
         }
-        // TODO IOS synchronized(this) {
-            if (javaIsValid) {
-                return
-            }
-            val sign = bigInt!!.sign()
-            val digits = if (sign != 0) bigInt!!.littleEndianIntsMagnitude() else intArrayOf(0)
-            setJavaRepresentation(sign, digits!!.size, digits)
-        // TODO IOS}
+        if (javaIsValid) {
+            return
+        }
+        val sign = bigInt!!.sign()
+        val digits = if (sign != 0) bigInt!!.littleEndianIntsMagnitude() else intArrayOf(0)
+        setJavaRepresentation(sign, digits!!.size, digits)
     }
 
     /**
