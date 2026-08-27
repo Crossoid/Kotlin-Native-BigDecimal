@@ -226,12 +226,6 @@ class BigInt {
     }
 
     companion object {
-        /* TODO IOS Maybe needed?
-        private val registry: NativeAllocationRegistry = NativeAllocationRegistry.createMalloced(
-            BigInt::class.java.getClassLoader(), kendy.math.NativeBN.getNativeFinalizer()
-        )
-        */
-
         private fun newBigInt(): BigInt {
             val bi = BigInt()
             bi.setBignum(NativeBN.BN_new())

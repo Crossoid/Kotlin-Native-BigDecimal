@@ -19,6 +19,7 @@ package kendy.math
 import boringssl.BIGNUM
 import kotlinx.cinterop.*
 import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.Platform
 import kotlin.native.ref.createCleaner
 
 /**
@@ -165,8 +166,9 @@ actual internal object NativeBN {
         boringssl.BN_set_negative(retBN, neg.toInt())
     }
 
+    @OptIn(ExperimentalNativeApi::class)
     actual fun litEndInts2bn(ints: IntArray?, len: Int, neg: Boolean, ret: Long) {
-        // TODO assert(ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
+        check(Platform.isLittleEndian) { "Little-endian integer conversion is not supported on this platform" }
 
         val retBN = toBigNum(ret)
         // "pin" the IntArray to fix it in memory at a given place
@@ -570,9 +572,4 @@ actual internal object NativeBN {
             }
         }
     }
-
-    // &BN_free
-    /* TODO IOS Maybe needed? - commented out in BigInt.kt
-    fun getNativeFinalizer(): Long
-    */
 }
