@@ -1,8 +1,9 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     kotlin("multiplatform") version "2.2.21"
-    id("com.android.library")
+    id("com.android.kotlin.multiplatform.library") version "9.3.1"
     id("maven-publish")
 }
 
@@ -17,11 +18,18 @@ repositories {
 }
 
 kotlin {
-    androidTarget() {
-        publishLibraryVariants("release", "debug")
+    jvmToolchain(17)
+
+    android {
+        namespace = "com.crossoid.bigdecimal"
+        compileSdk = 36
+
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
     }
 
-    iosArm64() {
+    iosArm64 {
         binaries {
             framework {
                 baseName = "library"
@@ -49,7 +57,7 @@ kotlin {
             }
         }
     }
-    iosSimulatorArm64() {
+    iosSimulatorArm64 {
         binaries {
             framework {
                 baseName = "library"
@@ -77,37 +85,13 @@ kotlin {
             }
         }
     }
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-            }
-        }
-
-        val commonMain by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-
-        val iosMain by creating {
-            dependsOn(commonMain)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
-
-            kotlin.srcDir("src/iosMain/kotlin")
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
     }
-}
-
-android {
-    namespace = "com.crossoid.bigdecimal"
-
-    compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_17)
-        targetCompatibility(JavaVersion.VERSION_17)
-    }
-    compileSdk = 36
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 }
 
 publishing {
@@ -116,8 +100,8 @@ publishing {
             name = "GitHubPackages"
             setUrl("https://maven.pkg.github.com/crossoid/Kotlin-Native-BigDecimal")
             credentials {
-                username = gradleLocalProperties(rootDir).getProperty("github_user")
-                password = gradleLocalProperties(rootDir).getProperty("github_token")
+                username = gradleLocalProperties(rootDir, providers).getProperty("github_user")
+                password = gradleLocalProperties(rootDir, providers).getProperty("github_token")
             }
         }
     }
