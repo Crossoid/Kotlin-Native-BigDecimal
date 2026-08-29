@@ -1,5 +1,6 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
 plugins {
     kotlin("multiplatform") version "2.2.21"
@@ -62,6 +63,7 @@ kotlin {
             framework {
                 baseName = "library"
             }
+            test("benchmark", listOf(NativeBuildType.RELEASE))
         }
         // Build a native interop from the boringssl library; details here:
         // https://kotlinlang.org/docs/mpp-dsl-reference.html#cinterops
