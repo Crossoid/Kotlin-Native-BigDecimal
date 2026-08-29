@@ -90,6 +90,16 @@ class BigDecimalAllocationHotspotTest {
     }
 
     @Test
+    fun exactScaleAlignmentRejectsJavaBigIntegerOverflow() {
+        val huge = BigDecimal(BigInteger.ONE, -1_999_999_998)
+
+        val error = assertFailsWith<ArithmeticException> {
+            huge.add(BigDecimal.ONE)
+        }
+        assertEquals("BigInteger would overflow supported range", error.message)
+    }
+
+    @Test
     fun roundsWithSingleWordRemainderForPositiveAndNegativeValues() {
         val context = MathContext(11, RoundingMode.HALF_EVEN)
 

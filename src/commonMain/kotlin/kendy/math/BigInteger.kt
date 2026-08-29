@@ -938,6 +938,9 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         if (exp < 0) {
             throw ArithmeticException("exp < 0: $exp")
         }
+        if (bitLength().toLong() * exp / Int.SIZE_BITS > MAX_MAG_LENGTH) {
+            throw ArithmeticException("BigInteger would overflow supported range")
+        }
         return BigInteger(BigInt.exp(getBigInt()!!, exp))
     }
 
@@ -1260,6 +1263,9 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     companion object {
         /** This is the serialVersionUID used by the sun implementation.  */
         private const val serialVersionUID = -8287574255936472291L
+
+        /** Maximum magnitude length supported by java.math.BigInteger. */
+        private const val MAX_MAG_LENGTH = Int.MAX_VALUE / Int.SIZE_BITS + 1
 
         /** The `BigInteger` constant 0.  */
         @JvmField
