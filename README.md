@@ -5,7 +5,7 @@ Kotlin/JVM project, want to port it to Kotlin/Native iOS, but struggle because
 you are using java.math.BigDecimal and cannot find an implementation, this is
 the library you want to use.
 
-The code is production-ready and used in the iOS port of [HiPER Scientific
+The code is production-ready, optimized for performance, and used in the iOS port of [HiPER Scientific
 Calculator](https://apps.apple.com/us/app/hiper-scientific-calculator/id1645513530).
 
 This library has the same API as java.math.BigDecimal, all you need to do
@@ -14,7 +14,7 @@ because binary packages are now available.
 
     val iosArm64Main by getting {
         dependencies {
-            implementation("com.crossoid:kotlin-native-bigdecimal:1.2.0")
+            implementation("com.crossoid:kotlin-native-bigdecimal:1.2.1")
         }
     }
 
@@ -29,13 +29,15 @@ Binary packages are provided via GitHub Packages, please see the
 for exact details how to import the library and how to use it. The following
 versions were released so far:
 
+* 1.2.1
+  - Matched Java BigInteger's power overflow limit
+  - Improved native arithmetic performance and memory use
+  - Migrated the build to Gradle 9 and the Android-KMP library plugin
+  - Automated optimized BoringSSL rebuilds
 * 1.2.0
-  - Prevented iOS memory exhaustion by deterministically releasing temporary
-    BIGNUM values used by division, rounding, multiplication, and scaled arithmetic
-  - Reduced allocations in BigDecimal division, rounding, precision calculation,
-    trailing-zero stripping, scale alignment, and comparison hot paths
-  - Added regression coverage for large values, signs, rounding boundaries, and
-    scoped native ownership
+  - Fixed iOS memory exhaustion caused by temporary BIGNUM leaks
+  - Reduced BigDecimal arithmetic and comparison allocations
+  - Added native ownership and rounding regression coverage
 * 1.1.1
   - Fixed leaking the native BIGNUM owned by every BigInt on iOS
   - Restored safe BigInteger parsing and formatting for radices 2 through 36
