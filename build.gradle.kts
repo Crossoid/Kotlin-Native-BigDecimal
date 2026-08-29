@@ -47,6 +47,8 @@ fun registerNativeWrapperTasks(
             "xcrun", "--sdk", sdk, "clang++",
             "-target", target,
             "-std=c++17",
+            "-O3",
+            "-DNDEBUG",
             "-I${boringsslHeaders.asFile.absolutePath}",
             "-c", nativeWrapperSource.asFile.absolutePath,
             "-o", objectFile.get().asFile.absolutePath
