@@ -1,4 +1,6 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.gradle.api.Task
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -18,6 +20,99 @@ version = "1.2.0"
 repositories {
     google()
     mavenCentral()
+}
+
+val boringSslSourceDirectory = layout.projectDirectory.dir("bignum/ios/boringssl")
+val boringSslBuildInputs = fileTree(boringSslSourceDirectory) {
+    exclude(".git/**", "build/**", "build-*/**", "install/**")
+}
+
+data class BoringSslTasks(
+    val build: TaskProvider<Exec>,
+    val rebuild: TaskProvider<Task>
+)
+
+fun registerBoringSslTasks(
+    targetName: String,
+    buildDirectoryName: String,
+    sdk: String
+): BoringSslTasks {
+    val capitalizedTargetName = targetName.replaceFirstChar { it.uppercase() }
+    val buildDirectory = boringSslSourceDirectory.dir(buildDirectoryName)
+    val cryptoLibrary = buildDirectory.file("crypto/libcrypto.a")
+    val sslLibrary = buildDirectory.file("ssl/libssl.a")
+
+    val cleanTask = tasks.register<Delete>("clean${capitalizedTargetName}BoringSsl") {
+        group = "build"
+        delete(buildDirectory)
+    }
+
+    val configureTask = tasks.register<Exec>("configure${capitalizedTargetName}BoringSsl") {
+        group = "build"
+        inputs.files(boringSslBuildInputs)
+        inputs.property("sdk", sdk)
+        outputs.file(buildDirectory.file("CMakeCache.txt"))
+
+        doFirst {
+            require(boringSslSourceDirectory.file("CMakeLists.txt").asFile.isFile) {
+                "Clone BoringSSL into ${boringSslSourceDirectory.asFile} before building"
+            }
+        }
+
+        commandLine(
+            "cmake",
+            "-S", boringSslSourceDirectory.asFile.absolutePath,
+            "-B", buildDirectory.asFile.absolutePath,
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+            "-DCMAKE_C_FLAGS_RELEASE=-O3 -DNDEBUG",
+            "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -DNDEBUG",
+            "-DCMAKE_ASM_FLAGS_RELEASE=-O3 -DNDEBUG",
+            "-DCMAKE_OSX_SYSROOT=$sdk",
+            "-DCMAKE_OSX_ARCHITECTURES=arm64",
+            "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.2"
+        )
+    }
+
+    val buildTask = tasks.register<Exec>("build${capitalizedTargetName}BoringSsl") {
+        group = "build"
+        dependsOn(configureTask)
+        inputs.files(boringSslBuildInputs)
+        inputs.file(buildDirectory.file("CMakeCache.txt"))
+        outputs.files(cryptoLibrary, sslLibrary)
+
+        commandLine(
+            "cmake",
+            "--build", buildDirectory.asFile.absolutePath,
+            "--config", "Release",
+            "--target", "crypto", "ssl",
+            "--parallel"
+        )
+    }
+
+    val rebuildTask = tasks.register("rebuild${capitalizedTargetName}BoringSsl") {
+        group = "build"
+        description = "Cleanly rebuilds the Release BoringSSL libraries for $targetName."
+        dependsOn(cleanTask, buildTask)
+    }
+    configureTask.configure {
+        mustRunAfter(cleanTask)
+    }
+
+    return BoringSslTasks(buildTask, rebuildTask)
+}
+
+val iosArm64BoringSsl = registerBoringSslTasks("iosArm64", "build-arm64", "iphoneos")
+val iosSimulatorArm64BoringSsl = registerBoringSslTasks(
+    "iosSimulatorArm64",
+    "build-arm64-simulator",
+    "iphonesimulator"
+)
+
+tasks.register("rebuildIosBoringSsl") {
+    group = "build"
+    description = "Cleanly rebuilds the Release BoringSSL libraries for iOS devices and simulators."
+    dependsOn(iosArm64BoringSsl.rebuild, iosSimulatorArm64BoringSsl.rebuild)
 }
 
 val nativeWrapperSource = layout.projectDirectory.file("bignum/ios/native/KBNNative.mm")
@@ -158,12 +253,20 @@ kotlin {
 }
 
 tasks.named("cinteropBoringsslIosArm64") {
-    dependsOn(archiveIosArm64BignumWrapper)
-    inputs.files(archiveIosArm64BignumWrapper)
+    dependsOn(archiveIosArm64BignumWrapper, iosArm64BoringSsl.build)
+    inputs.files(
+        archiveIosArm64BignumWrapper,
+        boringSslSourceDirectory.file("build-arm64/crypto/libcrypto.a"),
+        boringSslSourceDirectory.file("build-arm64/ssl/libssl.a")
+    )
 }
 tasks.named("cinteropBoringsslIosSimulatorArm64") {
-    dependsOn(archiveIosSimulatorArm64BignumWrapper)
-    inputs.files(archiveIosSimulatorArm64BignumWrapper)
+    dependsOn(archiveIosSimulatorArm64BignumWrapper, iosSimulatorArm64BoringSsl.build)
+    inputs.files(
+        archiveIosSimulatorArm64BignumWrapper,
+        boringSslSourceDirectory.file("build-arm64-simulator/crypto/libcrypto.a"),
+        boringSslSourceDirectory.file("build-arm64-simulator/ssl/libssl.a")
+    )
 }
 
 publishing {

@@ -23,19 +23,18 @@ Change dir to 'ios' (or to 'jni' - if you want to build the JNI version).
 
     git clone git@github.com:google/boringssl.git
     cd boringssl
-    mkdir build-arm64
-    cd build-arm64
+    cd ../../..
 
 # Configure & build BoringSSL
 
-* For iOS Simulator:
+Cleanly configure and rebuild optimized device and simulator libraries with:
 
-        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 ..
-        make -j8
+    ./gradlew rebuildIosBoringSsl
 
-* For iOS (probably - untested yet):
-
-        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 ..
+The task removes both CMake build directories, configures Release builds with
+`-O3 -DNDEBUG` using the active Xcode SDKs, and builds only the `crypto` and
+`ssl` static libraries. For one target, use `rebuildIosArm64BoringSsl` or
+`rebuildIosSimulatorArm64BoringSsl`.
 
 * For JNI (only for testing):
 

@@ -75,26 +75,22 @@ I've tested this both with the iOS Simulator and a device.  To build, do:
 
 * Build BoringSSL
 
-  See bignum/README.md for details, but mostly down to:
+  Clone BoringSSL into the expected source directory:
 
         cd bignum/ios
 
         git clone git@github.com:google/boringssl.git
         cd boringssl
-        mkdir build-arm64
-        cd build-arm64
+        cd ../../..
 
-  Simulator:
+  Then cleanly configure and rebuild optimized device and simulator libraries:
 
-        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_OSX_ARCHITECTURES=arm64 ..
-        make -j8
+        ./gradlew rebuildIosBoringSsl
 
-  Device:
-
-        /Applications/CMake.app/Contents/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fPIC -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 ..
-        make -j8
-
-        cd ../../../..
+  The task removes both CMake build directories, configures Release builds with
+  `-O3 -DNDEBUG` using the active Xcode SDKs, and builds the `crypto` and `ssl`
+  static libraries. Use `rebuildIosArm64BoringSsl` or
+  `rebuildIosSimulatorArm64BoringSsl` when only one target is needed.
 
 * Build the BigDecimal.klib and BigDecimal-cinterop-boringssl.klib
 
