@@ -1,5 +1,6 @@
-headers = openssl/ssl.h openssl/crypto.h openssl/bn.h
-compilerOpts = -I./bignum/ios/boringssl/include
-staticLibraries = libcrypto.a libssl.a
-libraryPaths = ./bignum/ios/boringssl/build-arm64/crypto ./bignum/ios/boringssl/build-arm64/ssl
+language = Objective-C
+headers = KBNNative.h openssl/ssl.h openssl/crypto.h openssl/bn.h
+compilerOpts = -I./bignum/ios/native -I./bignum/ios/boringssl/include
+staticLibraries = libkbnnative.a libcrypto.a libssl.a
+libraryPaths = ./build/native/iosArm64 ./bignum/ios/boringssl/build-arm64/crypto ./bignum/ios/boringssl/build-arm64/ssl
 package = boringssl

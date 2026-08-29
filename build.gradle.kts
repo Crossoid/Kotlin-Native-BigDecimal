@@ -1,4 +1,6 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 
@@ -17,6 +19,63 @@ repositories {
     google()
     mavenCentral()
 }
+
+val nativeWrapperSource = layout.projectDirectory.file("bignum/ios/native/KBNNative.mm")
+val nativeWrapperHeader = layout.projectDirectory.file("bignum/ios/native/KBNNative.h")
+val boringsslHeaders = layout.projectDirectory.dir("bignum/ios/boringssl/include")
+
+fun registerNativeWrapperTasks(
+    targetName: String,
+    sdk: String,
+    target: String
+): TaskProvider<Exec> {
+    val capitalizedTargetName = targetName.replaceFirstChar { it.uppercase() }
+    val outputDirectory = layout.buildDirectory.dir("native/$targetName")
+    val objectFile = outputDirectory.map { it.file("KBNNative.o") }
+    val archiveFile = outputDirectory.map { it.file("libkbnnative.a") }
+
+    val compileTask = tasks.register<Exec>("compile${capitalizedTargetName}BignumWrapper") {
+        inputs.files(nativeWrapperSource, nativeWrapperHeader)
+        inputs.dir(boringsslHeaders)
+        outputs.file(objectFile)
+
+        doFirst {
+            outputDirectory.get().asFile.mkdirs()
+        }
+
+        commandLine(
+            "xcrun", "--sdk", sdk, "clang++",
+            "-target", target,
+            "-std=c++17",
+            "-I${boringsslHeaders.asFile.absolutePath}",
+            "-c", nativeWrapperSource.asFile.absolutePath,
+            "-o", objectFile.get().asFile.absolutePath
+        )
+    }
+
+    return tasks.register<Exec>("archive${capitalizedTargetName}BignumWrapper") {
+        dependsOn(compileTask)
+        inputs.file(objectFile)
+        outputs.file(archiveFile)
+
+        commandLine(
+            "xcrun", "ar", "rcs",
+            archiveFile.get().asFile.absolutePath,
+            objectFile.get().asFile.absolutePath
+        )
+    }
+}
+
+val archiveIosArm64BignumWrapper = registerNativeWrapperTasks(
+    "iosArm64",
+    "iphoneos",
+    "arm64-apple-ios13.2"
+)
+val archiveIosSimulatorArm64BignumWrapper = registerNativeWrapperTasks(
+    "iosSimulatorArm64",
+    "iphonesimulator",
+    "arm64-apple-ios13.2-simulator"
+)
 
 kotlin {
     jvmToolchain(17)
@@ -94,6 +153,15 @@ kotlin {
             implementation(kotlin("test"))
         }
     }
+}
+
+tasks.named("cinteropBoringsslIosArm64") {
+    dependsOn(archiveIosArm64BignumWrapper)
+    inputs.files(archiveIosArm64BignumWrapper)
+}
+tasks.named("cinteropBoringsslIosSimulatorArm64") {
+    dependsOn(archiveIosSimulatorArm64BignumWrapper)
+    inputs.files(archiveIosSimulatorArm64BignumWrapper)
 }
 
 publishing {

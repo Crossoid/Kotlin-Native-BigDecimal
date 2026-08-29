@@ -69,28 +69,12 @@ actual internal object NativeBN {
      */
     private fun Boolean.toInt(): Int = if (this) 1 else 0
 
-    /**
-     * Run code with a temporary BN_CTX and always free it afterwards.
-     */
-    private inline fun <T> withBNContext(block: (ctx: CPointer<boringssl.BN_CTX>?) -> T): T {
-        val ctx = boringssl.BN_CTX_new() ?: throw OutOfMemoryError("BN_CTX_new failed")
-        try {
-            return block(ctx)
-        } finally {
-            boringssl.BN_CTX_free(ctx)
+    private fun checkNativeResult(result: Int, operation: String) {
+        if (result < 0) {
+            throw OutOfMemoryError("BN_CTX_new failed")
         }
-    }
-
-    /**
-     * Allocates a BIGNUM that cannot escape [block] and releases it
-     * deterministically, without creating a Kotlin StableRef/Cleaner.
-     */
-    private inline fun <T> withScopedBignum(block: (Long) -> T): T {
-        val bignum = toLong(boringssl.BN_new())
-        try {
-            return block(bignum)
-        } finally {
-            releaseBignum(bignum)
+        if (result == 0) {
+            throw ArithmeticException("$operation failed")
         }
     }
 
@@ -386,27 +370,11 @@ actual internal object NativeBN {
     actual fun bitLength(a: Long): Int {
         checkValid(a)
 
-        val aBN = toBigNum(a)
-
-        // If a is not negative, we can use BN_num_bits directly.
-        if (boringssl.BN_is_negative(aBN) == 0) {
-            return boringssl.BN_num_bits(aBN).toInt()
+        return memScoped {
+            val result = alloc<IntVar>()
+            checkNativeResult(boringssl.KBNBitLength(a.toULong(), result.ptr), "BN_copy")
+            result.value
         }
-
-        // In the negative case, the number of bits in a is the same as the number of bits in |a|,
-        // except one less when |a| is a power of two.
-        val positiveA = boringssl.BN_new()
-
-        if (boringssl.BN_copy(positiveA, aBN) == null) {
-            boringssl.BN_free(positiveA)
-            throw ArithmeticException("BN_copy failed")
-        }
-
-        boringssl.BN_set_negative(positiveA, 0)
-        val numBits = if (boringssl.BN_is_pow2(positiveA) != 0) boringssl.BN_num_bits(positiveA).toInt() - 1 else boringssl.BN_num_bits(positiveA).toInt()
-
-        boringssl.BN_free(positiveA)
-        return numBits
     }
 
     // int BN_is_bit_set(const BIGNUM *a, int n);
@@ -496,11 +464,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_gcd(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
-                throw ArithmeticException("BN_gcd failed")
-            }
-        }
+        checkNativeResult(boringssl.KBNGcd(r.toULong(), a.toULong(), b.toULong()), "BN_gcd")
     }
 
     // int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
@@ -509,11 +473,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(b)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_mul(toBigNum(r), toBigNum(a), toBigNum(b), ctx) == 0) {
-                throw ArithmeticException("BN_mul failed")
-            }
-        }
+        checkNativeResult(boringssl.KBNMultiply(r.toULong(), a.toULong(), b.toULong()), "BN_mul")
     }
 
     // int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
@@ -522,11 +482,7 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(p)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_exp(toBigNum(r), toBigNum(a), toBigNum(p), ctx) == 0) {
-                throw ArithmeticException("BN_exp failed")
-            }
-        }
+        checkNativeResult(boringssl.KBNExponentiate(r.toULong(), a.toULong(), p.toULong()), "BN_exp")
     }
 
     // int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
@@ -536,31 +492,28 @@ actual internal object NativeBN {
         checkValid(m)
         checkValid(d)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
-                throw ArithmeticException("BN_div failed")
-            }
-        }
+        checkNativeResult(
+            boringssl.KBNDivide(dv.toULong(), rem.toULong(), m.toULong(), d.toULong()),
+            "BN_div"
+        )
     }
 
     actual fun BN_divWithRemainderComparison(dv: Long, m: Long, d: Long): Int {
         checkValid(dv)
         checkValid(m)
         checkValid(d)
-        return withScopedBignum { rem ->
-            withBNContext { ctx ->
-                if (boringssl.BN_div(toBigNum(dv), toBigNum(rem), toBigNum(m), toBigNum(d), ctx) == 0) {
-                    throw ArithmeticException("BN_div failed")
-                }
-            }
-            if (boringssl.BN_is_zero(toBigNum(rem)) != 0) {
-                Int.MIN_VALUE
-            } else {
-                if (boringssl.BN_lshift(toBigNum(rem), toBigNum(rem), 1) == 0) {
-                    throw ArithmeticException("BN_lshift failed")
-                }
-                boringssl.BN_ucmp(toBigNum(rem), toBigNum(d))
-            }
+        return memScoped {
+            val comparison = alloc<IntVar>()
+            checkNativeResult(
+                boringssl.KBNDivideWithRemainderComparison(
+                    dv.toULong(),
+                    m.toULong(),
+                    d.toULong(),
+                    comparison.ptr
+                ),
+                "BN_div"
+            )
+            comparison.value
         }
     }
 
@@ -570,11 +523,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(m)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_nnmod(toBigNum(r), toBigNum(a), toBigNum(m), ctx) == 0) {
-                throw ArithmeticException("BN_nnmod failed")
-            }
-        }
+        checkNativeResult(
+            boringssl.KBNNonNegativeModulo(r.toULong(), a.toULong(), m.toULong()),
+            "BN_nnmod"
+        )
     }
 
     // int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx);
@@ -584,11 +536,15 @@ actual internal object NativeBN {
         checkValid(p)
         checkValid(m)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_mod_exp(toBigNum(r), toBigNum(a), toBigNum(p), toBigNum(m), ctx) == 0) {
-                throw ArithmeticException("BN_mod_exp failed")
-            }
-        }
+        checkNativeResult(
+            boringssl.KBNModularExponentiation(
+                r.toULong(),
+                a.toULong(),
+                p.toULong(),
+                m.toULong()
+            ),
+            "BN_mod_exp"
+        )
     }
 
     // BIGNUM * BN_mod_inverse(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
@@ -597,11 +553,10 @@ actual internal object NativeBN {
         checkValid(a)
         checkValid(n)
 
-        withBNContext { ctx ->
-            if (boringssl.BN_mod_inverse(toBigNum(ret), toBigNum(a), toBigNum(n), ctx) == null) {
-                throw ArithmeticException("BN_mod_inverse failed")
-            }
-        }
+        checkNativeResult(
+            boringssl.KBNModularInverse(ret.toULong(), a.toULong(), n.toULong()),
+            "BN_mod_inverse"
+        )
     }
 
     // int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
@@ -620,17 +575,18 @@ actual internal object NativeBN {
     actual fun BN_primality_test(candidate: Long, checks: Int, do_trial_division: Boolean): Boolean {
         checkValid(candidate)
 
-        return withBNContext { ctx ->
-            memScoped {
-                val is_probably_prime = alloc<IntVar>()
-                is_probably_prime.value = 0
-
-                if (boringssl.BN_primality_test(is_probably_prime.ptr, toBigNum(candidate), checks, ctx, do_trial_division.toInt(), null) == 0) {
-                    throw ArithmeticException("BN_primality_test failed")
-                }
-
-                is_probably_prime.value != 0
-            }
+        return memScoped {
+            val isProbablyPrime = alloc<IntVar>()
+            checkNativeResult(
+                boringssl.KBNPrimalityTest(
+                    candidate.toULong(),
+                    checks,
+                    do_trial_division.toInt(),
+                    isProbablyPrime.ptr
+                ),
+                "BN_primality_test"
+            )
+            isProbablyPrime.value != 0
         }
     }
 }
