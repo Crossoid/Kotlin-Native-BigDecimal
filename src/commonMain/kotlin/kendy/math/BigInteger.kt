@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalAtomicApi::class)
-
 /*
  *  Licensed to the Apache Software Foundation (ASF) under one or more
  *  contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +16,7 @@
  */
 package kendy.math
 
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.Volatile
 import kotlin.jvm.JvmField
 import kotlin.jvm.JvmStatic
 import kotlin.jvm.Transient
@@ -55,18 +52,12 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     private var bigInt: BigInt? = null
 
     @Transient
-    private val nativeValidity = AtomicBoolean(false)
-
-    private var nativeIsValid: Boolean
-        get() = nativeValidity.load()
-        set(value) = nativeValidity.store(value)
+    @Volatile
+    private var nativeIsValid = false
 
     @Transient
-    private val javaValidity = AtomicBoolean(false)
-
-    private var javaIsValid: Boolean
-        get() = javaValidity.load()
-        set(value) = javaValidity.store(value)
+    @Volatile
+    private var javaIsValid = false
 
     /** The magnitude of this in the little-endian representation.  */
     @Transient
@@ -313,9 +304,6 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
         if (nativeIsValid) {
             return bigInt
         }
-        if (nativeIsValid) {
-            return bigInt
-        }
         val bigInt = BigInt()
         bigInt.putLittleEndianInts(digits, sign < 0)
         setBigInt(bigInt)
@@ -344,9 +332,6 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     }
 
     fun prepareJavaRepresentation() {
-        if (javaIsValid) {
-            return
-        }
         if (javaIsValid) {
             return
         }
