@@ -370,11 +370,14 @@ actual internal object NativeBN {
     actual fun bitLength(a: Long): Int {
         checkValid(a)
 
-        return memScoped {
-            val result = alloc<IntVar>()
-            checkNativeResult(boringssl.KBNBitLength(a.toULong(), result.ptr), "BN_copy")
-            result.value
+        val result = boringssl.KBNBitLength(a.toULong())
+        if (result == -1) {
+            throw OutOfMemoryError("BN_CTX_new failed")
         }
+        if (result == -2) {
+            throw ArithmeticException("BN_copy failed")
+        }
+        return result
     }
 
     // int BN_is_bit_set(const BIGNUM *a, int n);
@@ -502,18 +505,17 @@ actual internal object NativeBN {
         checkValid(dv)
         checkValid(m)
         checkValid(d)
-        return memScoped {
-            val comparison = alloc<IntVar>()
-            checkNativeResult(
-                boringssl.KBNDivideWithRemainderComparison(
-                    dv.toULong(),
-                    m.toULong(),
-                    d.toULong(),
-                    comparison.ptr
-                ),
-                "BN_div"
-            )
-            comparison.value
+        return when (val result = boringssl.KBNDivideWithRemainderComparison(
+            dv.toULong(),
+            m.toULong(),
+            d.toULong()
+        )) {
+            0 -> Int.MIN_VALUE
+            1 -> -1
+            2 -> 0
+            3 -> 1
+            -1 -> throw OutOfMemoryError("BN_CTX_new failed")
+            else -> throw ArithmeticException("BN_div failed: $result")
         }
     }
 

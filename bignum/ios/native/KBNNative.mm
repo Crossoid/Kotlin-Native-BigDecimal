@@ -6,6 +6,9 @@
 namespace {
 
 constexpr int32_t contextAllocationFailed = -1;
+constexpr int32_t operationFailed = -2;
+constexpr int32_t exactDivision = 0;
+constexpr int32_t comparisonOffset = 2;
 
 class ThreadContext {
 public:
@@ -36,11 +39,10 @@ inline const BIGNUM *toConstBignum(uintptr_t value) {
 
 }  // namespace
 
-int32_t KBNBitLength(uintptr_t value, int32_t *result) {
+int32_t KBNBitLength(uintptr_t value) {
     const BIGNUM *source = toConstBignum(value);
     if (!BN_is_negative(source)) {
-        *result = BN_num_bits(source);
-        return 1;
+        return BN_num_bits(source);
     }
 
     BN_CTX *context = threadContext.get();
@@ -52,13 +54,13 @@ int32_t KBNBitLength(uintptr_t value, int32_t *result) {
     BIGNUM *magnitude = BN_CTX_get(context);
     if (magnitude == nullptr || BN_copy(magnitude, source) == nullptr) {
         BN_CTX_end(context);
-        return 0;
+        return operationFailed;
     }
 
     BN_set_negative(magnitude, 0);
-    *result = BN_is_pow2(magnitude) ? BN_num_bits(magnitude) - 1 : BN_num_bits(magnitude);
+    const int32_t result = BN_is_pow2(magnitude) ? BN_num_bits(magnitude) - 1 : BN_num_bits(magnitude);
     BN_CTX_end(context);
-    return 1;
+    return result;
 }
 
 int32_t KBNGcd(uintptr_t result, uintptr_t first, uintptr_t second) {
@@ -122,8 +124,7 @@ int32_t KBNDivide(
 int32_t KBNDivideWithRemainderComparison(
     uintptr_t quotient,
     uintptr_t dividend,
-    uintptr_t divisor,
-    int32_t *comparison
+    uintptr_t divisor
 ) {
     BN_CTX *context = threadContext.get();
     if (context == nullptr) {
@@ -144,21 +145,22 @@ int32_t KBNDivideWithRemainderComparison(
             context
         )) {
         BN_CTX_end(context);
-        return 0;
+        return operationFailed;
     }
 
+    int32_t result;
     if (BN_is_zero(remainder)) {
-        *comparison = INT32_MIN;
+        result = exactDivision;
     } else {
         if (!BN_lshift(remainder, remainder, 1)) {
             BN_CTX_end(context);
-            return 0;
+            return operationFailed;
         }
-        *comparison = BN_ucmp(remainder, toConstBignum(divisor));
+        result = BN_ucmp(remainder, toConstBignum(divisor)) + comparisonOffset;
     }
 
     BN_CTX_end(context);
-    return 1;
+    return result;
 }
 
 int32_t KBNNonNegativeModulo(uintptr_t result, uintptr_t value, uintptr_t modulus) {
