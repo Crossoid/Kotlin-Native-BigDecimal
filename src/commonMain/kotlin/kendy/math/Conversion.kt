@@ -215,7 +215,7 @@ internal object Conversion {
                             + (temp[i1].toLong() and 0xFFFFFFFFL))
                     val res = divideLongByBillion(temp1)
                     temp[i1] = res.toInt()
-                    result11 = ((res shr 32) as Int).toLong()
+                    result11 = (res shr 32).toInt().toLong()
                 }
                 var resDigit = result11.toInt()
                 val previous = currentChar

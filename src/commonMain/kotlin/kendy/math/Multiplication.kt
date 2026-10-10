@@ -130,7 +130,7 @@ internal object Multiplication {
                     .pow(Int.MAX_VALUE)
                 res = powerOfFive
                 var longExp = exp - Int.MAX_VALUE
-                intExp = (exp % Int.MAX_VALUE) as Int
+                intExp = (exp % Int.MAX_VALUE).toInt()
                 while (longExp > Int.MAX_VALUE) {
                     res = res.multiply(powerOfFive)
                     longExp -= Int.MAX_VALUE.toLong()
