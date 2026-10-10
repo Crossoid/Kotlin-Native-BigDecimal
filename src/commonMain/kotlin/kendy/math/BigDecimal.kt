@@ -1320,11 +1320,11 @@ class BigDecimal : Number, Comparable<BigDecimal?> /*, java.io.Serializable*/ {
         if (diffScale > 0) {
             // Multiply 'u2'  by:  10^((s1 - s2) - scale)
             scaledDivisor =
-                kendy.math.Multiplication.multiplyByTenPow(scaledDivisor, (diffScale as Int).toLong())
+                kendy.math.Multiplication.multiplyByTenPow(scaledDivisor, diffScale)
         } else if (diffScale < 0) {
             // Multiply 'u1'  by:  10^(scale - (s1 - s2))
             scaledDividend = kendy.math.Multiplication.multiplyByTenPow(
-                scaledDividend, (-diffScale as Int).toLong()
+                scaledDividend, -diffScale
             )
         }
         return divideBigIntegers(scaledDividend, scaledDivisor, scale, roundingMode)

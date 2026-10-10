@@ -1283,7 +1283,7 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
             if (x % 2 == 0) {
                 return false
             }
-            val max = sqrt(x.toDouble()) as Int
+            val max = sqrt(x.toDouble()).toInt()
             var i = 3
             while (i <= max) {
                 if (x % i == 0) {
