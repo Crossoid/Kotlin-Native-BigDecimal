@@ -122,6 +122,25 @@ class BigDecimalAllocationHotspotTest {
     }
 
     @Test
+    fun roundedIntegersWithTrailingDecimalZerosConvertExactly() {
+        val cases = listOf(
+            "1278723031607273106459514351543.999" to "1278723031607273106459514351544.00",
+            "-1278723031607273106459514351543.999" to "-1278723031607273106459514351544.00",
+            "360617070947878285619921448453434.999" to "360617070947878285619921448453435.00",
+            "-360617070947878285619921448453434.999" to "-360617070947878285619921448453435.00",
+        )
+
+        for ((input, expectedText) in cases) {
+            val expected = BigDecimal(expectedText)
+            val actual = BigDecimal(input).round(MathContext(expected.precision(), RoundingMode.HALF_UP))
+
+            assertEquals(expectedText, actual.toPlainString(), input)
+            assertEquals(expected.toBigIntegerExact(), actual.toBigIntegerExact(), input)
+            assertEquals(expected.unscaledValue().lowestSetBit, actual.unscaledValue().lowestSetBit, input)
+        }
+    }
+
+    @Test
     fun scopedDivisionRemainderComparisonHandlesExactHalfAndSigns() {
         assertScopedDivision("5", ZERO_REMAINDER, "10", "2")
         assertScopedDivision("3", -1, "10", "3")

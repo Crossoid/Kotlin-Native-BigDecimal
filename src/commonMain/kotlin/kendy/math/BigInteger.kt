@@ -904,14 +904,24 @@ class BigInteger : Number, Comparable<BigInteger?> /*, java.io.Serializable*/ {
     internal fun multiplyByPositiveIntInPlace(value: Int) {
         require(value > 0) { "value must be positive: $value" }
         getBigInt()!!.multiplyScopedByPositiveInt(value)
+        invalidateJavaRepresentation()
     }
 
     internal fun addInPlace(value: BigInteger) {
         getBigInt()!!.addToScoped(value.getBigInt()!!)
+        invalidateJavaRepresentation()
     }
 
     internal fun replaceScopedValue(value: BigInteger) {
         getBigInt()!!.replaceScopedValue(value.getBigInt()!!)
+        invalidateJavaRepresentation()
+    }
+
+    /** Scoped native mutations invalidate the cached magnitude and all values derived from it. */
+    private fun invalidateJavaRepresentation() {
+        firstNonzeroDigit = -2
+        hashCode = 0
+        javaIsValid = false
     }
 
     /**
