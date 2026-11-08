@@ -24,7 +24,7 @@ because binary packages are now available.
 
     val iosArm64Main by getting {
         dependencies {
-            implementation("com.crossoid:kotlin-native-bigdecimal:1.2.1")
+            implementation("com.crossoid:kotlin-native-bigdecimal:1.3.0")
         }
     }
 
@@ -39,6 +39,12 @@ Binary packages are provided via GitHub Packages, please see the
 for exact details how to import the library and how to use it. The following
 versions were released so far:
 
+* 1.3.0
+  - Added support for additional iOS, macOS, watchOS, tvOS, and Linux targets
+    (contributed by Matthew de Detrich)
+  - Fixed primitive conversions that could throw ClassCastException
+    (contributed by Matthew de Detrich)
+  - Fixed exact integer conversion after rounding
 * 1.2.1
   - Matched Java BigInteger's power overflow limit
   - Improved native arithmetic performance and memory use
