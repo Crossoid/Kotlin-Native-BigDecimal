@@ -266,7 +266,7 @@ fun nativeCommandsOf(target: KotlinNativeTarget, toolchain: NativeToolchain): Na
                 // llvm-ar already writes the symbol index; the host ranlib
                 // (e.g. the macOS one) would break the ELF archive.
                 "-DCMAKE_AR=$llvmAr",
-                "-DCMAKE_RANLIB=true"
+                "-DCMAKE_RANLIB=/usr/bin/true"
             )
             NativeCommands(
                 cmakeArguments,
